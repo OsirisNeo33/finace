@@ -12,7 +12,7 @@ App personal para controlar gastos e ingresos día a día. **Apunta un gasto en 
 - **Movimientos:** buscador y filtros por tipo, categoría, cuenta, etiqueta y mes.
 - **Análisis:** gasto medio diario, tasa de ahorro, comparación con el mes anterior, desglose por categoría, presupuestos, **calendario de gastos** y evolución de 6 meses.
 - **Presupuestos** mensuales (total y por categoría) con avisos de color al 80 % y al 100 %.
-- **Recurrentes** (nómina, alquiler, suscripciones): se apuntan solos en su fecha.
+- **Pagos:** calendario mensual de suscripciones y recibos (Netflix, alquiler, gimnasio…) con lo pagado y lo que falta. Cada pago se apunta solo en su fecha o, si lo prefieres, es un recordatorio que marcas tú como pagado. En el inicio aparecen los próximos pagos.
 - Mes que empieza el día que cobras (p. ej. el 25), varias monedas, modo oscuro.
 - **Exportar a Excel (CSV)**, copia de seguridad y restauración (JSON).
 - **Funciona sin conexión** y se instala en el móvil como una app (PWA).

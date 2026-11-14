@@ -111,8 +111,33 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Guardar' }).click();
   await p.getByText(/3 movimientos añadidos/).waitFor();
 
+  // Calendario de pagos: Netflix (automático) aparece como pagado; añadir un recordatorio
+  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  await p.getByText('Pagos fijos este mes').waitFor();
+  await p.getByText(/Día \d+ · Pagado/).first().waitFor();
+  await p.getByRole('button', { name: /Añadir suscripción o pago/ }).click();
+  await p.getByPlaceholder(/Nombre/).fill('Gimnasio');
+  await p.getByPlaceholder('Importe').fill('35');
+  await p.locator('select').first().selectOption({ label: '🎬 Ocio' });
+  const dentro2 = new Date(Date.now() + 2 * 86400000);
+  const iso2 = `${dentro2.getFullYear()}-${String(dentro2.getMonth() + 1).padStart(2, '0')}-${String(dentro2.getDate()).padStart(2, '0')}`;
+  await p.locator('input[type=date]').fill(iso2);
+  await p.getByRole('button', { name: /Solo recordármelo/ }).click();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByRole('button', { name: 'Inicio', exact: true }).click();
+  await p.getByText('Próximos pagos').waitFor();
+  const gastosAntes = await p.getByTestId('gastos').innerText();
+  await p.locator('section', { hasText: 'Próximos pagos' }).getByRole('button', { name: /Marcar pagado/ }).click();
+  await p.getByText(/Gimnasio marcado como pagado/).waitFor();
+  assert.notStrictEqual(await p.getByTestId('gastos').innerText(), gastosAntes, 'marcar pagado apunta el gasto');
+  await p.getByRole('button', { name: 'Deshacer' }).click();
+  await p.waitForTimeout(300);
+  assert.strictEqual(await p.getByTestId('gastos').innerText(), gastosAntes);
+  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  await foto('10-pagos');
+  await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
+
   // Copia de seguridad: exportar, borrar todo, restaurar
-  await p.getByRole('button', { name: /Ajustes/ }).first().click();
   const [descarga] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Crear copia/ }).click()]);
   const ruta = await descarga.path();
   p.on('dialog', (dl) => dl.accept());

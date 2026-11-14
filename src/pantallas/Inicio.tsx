@@ -13,9 +13,14 @@ import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import type { PropsPantalla } from './tipos';
+import { usarPagos } from './usarPagos';
+import { FilaPago } from './Pagos';
 
 export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: PropsPantalla) {
   const { movimientos, cuentas, todasCuentas, categoriaPorId, dinero, ajustes, abrirEditor } = useDatos();
+  const hoy = hoyISO();
+  const { pagos } = usarPagos(aISO(addDays(new Date(), -31)), aISO(addDays(new Date(), 7)));
+  const proximos = pagos.filter((p) => (p.fecha >= hoy && p.estado !== 'pagado') || p.estado === 'vencido').slice(0, 4);
   const [cuentaAbierta, setCuentaAbierta] = useState<Cuenta | 'nueva' | null>(null);
   const presupuestos = useLiveQuery(() => db.presupuestos.toArray(), [], []);
 
@@ -147,6 +152,23 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
                 </div>
               );
             })}
+          </div>
+        </section>
+      )}
+
+      {/* Próximos pagos */}
+      {proximos.length > 0 && esActual && (
+        <section className="tarjeta overflow-hidden">
+          <div className="flex items-center justify-between px-4 pt-3">
+            <h2 className="font-semibold">Próximos pagos</h2>
+            <button className="text-sm text-[var(--color-marca)]" onClick={() => ir('pagos')}>
+              Ver calendario
+            </button>
+          </div>
+          <div className="py-1">
+            {proximos.map((p) => (
+              <FilaPago key={p.clave} p={p} mostrarFecha onEditar={() => ir('pagos')} />
+            ))}
           </div>
         </section>
       )}

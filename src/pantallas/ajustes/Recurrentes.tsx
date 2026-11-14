@@ -28,7 +28,7 @@ export function Recurrentes() {
 
   return (
     <>
-      <p className="texto-2 text-sm">Se apuntan solos en su fecha (al abrir la app). También puedes crearlos desde «+» → Nota → Repetir.</p>
+      <p className="texto-2 text-sm">Se apuntan solos en su fecha (al abrir la app) o, si eliges «Solo recordármelo», los marcas tú como pagados en la pestaña Pagos.</p>
       {mensual > 0 && (
         <div className="tarjeta p-4">
           <p className="texto-2 text-xs">Gastos fijos al mes (aprox.)</p>
@@ -45,7 +45,7 @@ export function Recurrentes() {
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium">{r.nota || c?.nombre}</span>
                   <span className="texto-2 text-xs">
-                    {FREC[r.frecuencia]} · {r.activo ? `próximo ${fechaCorta(proxima(r))}` : 'Pausado'}
+                    {FREC[r.frecuencia]} · {!r.activo ? 'Pausado' : r.automatico === false ? '🔔 Recordatorio' : `próximo ${fechaCorta(proxima(r))}`}
                   </span>
                 </span>
                 <span className="importe font-semibold" style={{ color: r.tipo === 'ingreso' ? 'var(--color-ingreso)' : undefined }}>
@@ -64,7 +64,7 @@ export function Recurrentes() {
   );
 }
 
-function FormRecurrente({ r, onCerrar }: { r?: Recurrente; onCerrar: () => void }) {
+export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente; onCerrar: () => void; inicioInicial?: string }) {
   const { categorias, cuentas, ajustes, avisar } = useDatos();
   const [tipo, setTipo] = useState<'gasto' | 'ingreso'>(r?.tipo ?? 'gasto');
   const [valor, setValor] = useState(r ? (r.importe / 100).toString().replace('.', ',') : '');
@@ -72,12 +72,15 @@ function FormRecurrente({ r, onCerrar }: { r?: Recurrente; onCerrar: () => void 
   const [cuentaId, setCuentaId] = useState(r?.cuentaId ?? ajustes.ultimaCuentaId ?? cuentas[0]?.id ?? '');
   const [nota, setNota] = useState(r?.nota ?? '');
   const [frecuencia, setFrecuencia] = useState<Frecuencia>(r?.frecuencia ?? 'mensual');
-  const [inicio, setInicio] = useState(r?.inicio ?? hoyISO());
+  const [inicio, setInicio] = useState(r?.inicio ?? inicioInicial ?? hoyISO());
+  const [automatico, setAutomatico] = useState(r?.automatico ?? true);
   const cats = categorias.filter((c) => c.tipo === tipo);
-  const pendientes = !r ? fechasPendientes(inicio, undefined, frecuencia, hoyISO()).length : 0;
+  const pendientes = !r && automatico ? fechasPendientes(inicio, undefined, frecuencia, hoyISO()).length : 0;
 
   async function guardar() {
-    await guardarRecurrente({ ...r, tipo, importe: aCentimos(valor), categoriaId: categoriaId || undefined, cuentaId, nota: nota.trim() || undefined, frecuencia, inicio, activo: r?.activo ?? true });
+    await guardarRecurrente({ ...r, tipo, importe: aCentimos(valor), categoriaId: categoriaId || undefined, cuentaId, nota: nota.trim() || undefined, frecuencia, inicio, activo: r?.activo ?? true, automatico,
+      // Al pasar a automático, no rellenar el pasado ya gestionado a mano
+      ultimaGeneracion: r?.ultimaGeneracion ?? (r && r.automatico === false && automatico ? hoyISO() : undefined) });
     const n = await generarRecurrentes();
     if (n) avisar(`${n} movimiento${n > 1 ? 's' : ''} añadido${n > 1 ? 's' : ''}`);
     onCerrar();
@@ -128,9 +131,18 @@ function FormRecurrente({ r, onCerrar }: { r?: Recurrente; onCerrar: () => void 
           ))}
         </div>
         <label className="text-sm">
-          <span className="texto-2">{r ? 'Primera fecha' : 'Primera fecha (puede ser pasada)'}</span>
+          <span className="texto-2">{frecuencia === 'mensual' ? 'Primer pago (se repite ese mismo día cada mes)' : 'Primer pago'}</span>
           <input type="date" className="campo mt-1" value={inicio} onChange={(e) => e.target.value && setInicio(e.target.value)} disabled={!!r?.ultimaGeneracion} />
         </label>
+        <div className="flex flex-col gap-2 text-sm">
+          <span className="texto-2">Cuando llegue el día…</span>
+          <button className="chip text-left" aria-pressed={automatico} onClick={() => setAutomatico(true)}>
+            ⚡ Apuntarlo solo como {tipo === 'gasto' ? 'gasto' : 'ingreso'}
+          </button>
+          <button className="chip text-left" aria-pressed={!automatico} onClick={() => setAutomatico(false)}>
+            🔔 Solo recordármelo (lo marco yo como pagado)
+          </button>
+        </div>
         {pendientes > 0 && (
           <p className="text-xs" style={{ color: 'var(--color-marca)' }}>
             Se apuntarán ahora {pendientes} movimiento{pendientes > 1 ? 's' : ''} hasta hoy.

@@ -10,4 +10,5 @@
 - **Racha:** días seguidos en que has apuntado algo a mano (los recurrentes automáticos no cuentan).
 - **Presupuestos solo mensuales** en esta versión (sin arrastre de sobrante).
 - **Saldo de cada banco:** al escribir el saldo que ves hoy en tu banco se ajusta el saldo inicial de la cuenta, en vez de crear un movimiento de «ajuste», para que no altere gastos ni ingresos.
+- **Pagos recurrentes «solo recordatorio»:** no se apuntan solos; aparecen en el calendario como pendientes (en rojo si se pasa la fecha) hasta que pulsas «Marcar pagado», que apunta el gasto en esa fecha.
 - **Pendiente para próximas versiones:** importar CSV del banco, detector de suscripciones, objetivos de ahorro, recordatorio diario con notificación, multimoneda por movimiento.

@@ -33,3 +33,9 @@ export const IconoPapelera = base(<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /
 export const IconoFlechas = base(<path d="M7 17l-4-4 4-4M3 13h13M17 7l4 4-4 4M21 11H8" />);
 export const IconoCheck = base(<path d="M20 6L9 17l-5-5" />);
 export const IconoFuego = base(<path d="M12 22c4 0 7-3 7-7 0-5-5-7-5-12-3 2-6 6-6 9-1-1-2-2-2-3-1 2-1 4-1 6 0 4 3 7 7 7z" />);
+export const IconoCalendario = base(
+  <>
+    <rect x="3" y="4" width="18" height="18" rx="2" />
+    <path d="M16 2v4M8 2v4M3 10h18" />
+  </>,
+);

@@ -56,6 +56,11 @@ export function fechasPendientes(inicio: string, ultima: string | undefined, fre
   return res;
 }
 
+/** Fechas en que toca un pago recurrente dentro de [desde, hasta]. */
+export function ocurrenciasEnRango(inicio: string, frecuencia: Frecuencia, desde: string, hasta: string): string[] {
+  return fechasPendientes(inicio, undefined, frecuencia, hasta).filter((f) => f >= desde);
+}
+
 export function fechaLarga(iso: string): string {
   const hoy = hoyISO();
   if (iso === hoy) return 'Hoy';

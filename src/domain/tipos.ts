@@ -50,6 +50,8 @@ export interface Recurrente {
   inicio: string; // primera fecha
   ultimaGeneracion?: string; // última fecha generada
   activo: boolean;
+  /** false = solo recordatorio: aparece en el calendario de pagos y lo marcas tú como pagado. */
+  automatico?: boolean;
 }
 
 export interface Presupuesto {

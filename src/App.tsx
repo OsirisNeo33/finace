@@ -8,10 +8,12 @@ import { Movimientos, type Filtro } from './pantallas/Movimientos';
 import { Estadisticas } from './pantallas/Estadisticas';
 import { Ajustes } from './pantallas/Ajustes';
 import { Bienvenida } from './pantallas/Bienvenida';
+import { Pagos } from './pantallas/Pagos';
+import { IconoCalendario } from './components/Iconos';
 import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
-export type Pestana = 'inicio' | 'movimientos' | 'estadisticas' | 'ajustes';
+export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'estadisticas' | 'ajustes';
 
 export default function App() {
   return (
@@ -70,13 +72,15 @@ function Contenido() {
     <div className="mx-auto min-h-dvh max-w-2xl pb-28">
       {pestana === 'inicio' && <Inicio {...props} />}
       {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
+      {pestana === 'pagos' && <Pagos />}
       {pestana === 'estadisticas' && <Estadisticas {...props} />}
       {pestana === 'ajustes' && <Ajustes />}
 
       <nav className="pb-seguro fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur" style={{ borderColor: 'var(--borde)', background: 'color-mix(in srgb, var(--superficie) 88%, transparent)' }}>
-        <div className="mx-auto grid max-w-2xl grid-cols-5 items-center">
+        <div className="mx-auto grid max-w-2xl grid-cols-6 items-center">
           <BotonNav activo={pestana === 'inicio'} onClick={() => ir('inicio')} icono={<IconoInicio />} texto="Inicio" />
           <BotonNav activo={pestana === 'movimientos'} onClick={() => ir('movimientos', {})} icono={<IconoLista />} texto="Movimientos" />
+          <BotonNav activo={pestana === 'pagos'} onClick={() => ir('pagos')} icono={<IconoCalendario />} texto="Pagos" />
           <div className="flex justify-center">
             <button
               className="-mt-7 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-marca)] text-white shadow-lg shadow-teal-900/30 active:scale-95 dark:text-teal-950"
@@ -99,7 +103,7 @@ function Contenido() {
 
 function BotonNav({ activo, onClick, icono, texto }: { activo: boolean; onClick: () => void; icono: React.ReactNode; texto: string }) {
   return (
-    <button className="flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium" style={{ color: activo ? 'var(--color-marca)' : 'var(--texto-2)' }} onClick={onClick} aria-current={activo ? 'page' : undefined}>
+    <button className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium" style={{ color: activo ? 'var(--color-marca)' : 'var(--texto-2)' }} onClick={onClick} aria-current={activo ? 'page' : undefined}>
       {icono}
       {texto}
     </button>

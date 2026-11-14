@@ -52,7 +52,7 @@ export async function generarRecurrentes(hoy = hoyISO()): Promise<number> {
   await db.transaction('rw', db.recurrentes, db.movimientos, async () => {
     const recs = await db.recurrentes.toArray();
     for (const r of recs) {
-      if (!r.activo) continue;
+      if (!r.activo || r.automatico === false) continue;
       const fechas = fechasPendientes(r.inicio, r.ultimaGeneracion, r.frecuencia, hoy);
       if (!fechas.length) continue;
       const t = ahora();
