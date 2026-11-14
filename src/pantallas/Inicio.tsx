@@ -1,4 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { FormCuenta } from './ajustes/Cuentas';
+import type { Cuenta } from '../domain/tipos';
 import { addDays, parseISO } from 'date-fns';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
@@ -14,6 +16,7 @@ import type { PropsPantalla } from './tipos';
 
 export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: PropsPantalla) {
   const { movimientos, cuentas, todasCuentas, categoriaPorId, dinero, ajustes, abrirEditor } = useDatos();
+  const [cuentaAbierta, setCuentaAbierta] = useState<Cuenta | 'nueva' | null>(null);
   const presupuestos = useLiveQuery(() => db.presupuestos.toArray(), [], []);
 
   const movsPeriodo = useMemo(() => movimientos.filter((m) => enPeriodo(m, periodo)), [movimientos, periodo]);
@@ -180,25 +183,32 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
       )}
 
       {/* Cuentas */}
-      {cuentas.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-baseline justify-between px-1">
-            <h2 className="font-semibold">Cuentas</h2>
-            <span className="importe texto-2 text-sm">Total {dinero(patrimonio)}</span>
-          </div>
-          <div className="sin-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
-            {cuentas.map((c) => (
-              <button key={c.id} className="tarjeta min-w-36 shrink-0 p-3 text-left" onClick={() => ir('movimientos', { cuentaId: c.id })}>
-                <span className="text-xl">{c.icono}</span>
-                <p className="texto-2 mt-1 truncate text-sm">{c.nombre}</p>
-                <p className="importe font-semibold" style={{ color: (saldos.get(c.id) ?? 0) < 0 ? 'var(--color-gasto)' : undefined }}>
-                  {dinero(saldos.get(c.id) ?? 0)}
-                </p>
-              </button>
-            ))}
-          </div>
-        </section>
-      )}
+      <section>
+        <div className="mb-2 flex items-baseline justify-between px-1">
+          <h2 className="font-semibold">Mis cuentas</h2>
+          <span className="importe texto-2 text-sm">Total {dinero(patrimonio)}</span>
+        </div>
+        <div className="sin-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
+          {cuentas.map((c) => (
+            <button key={c.id} className="tarjeta min-w-36 shrink-0 p-3 text-left" onClick={() => setCuentaAbierta(c)} aria-label={`${c.nombre}: actualizar saldo`}>
+              <span className="flex items-center gap-2">
+                <span className="h-2.5 w-2.5 rounded-full" style={{ background: c.color }} />
+                <span className="text-lg">{c.icono}</span>
+              </span>
+              <p className="texto-2 mt-1 truncate text-sm">{c.nombre}</p>
+              <p className="importe font-semibold" style={{ color: (saldos.get(c.id) ?? 0) < 0 ? 'var(--color-gasto)' : undefined }}>
+                {dinero(saldos.get(c.id) ?? 0)}
+              </p>
+            </button>
+          ))}
+          <button className="flex min-w-28 shrink-0 flex-col items-center justify-center gap-1 rounded-[1.25rem] border-2 border-dashed p-3 text-sm font-medium text-[var(--color-marca)]" style={{ borderColor: 'var(--borde)' }} onClick={() => setCuentaAbierta('nueva')}>
+            <span className="text-xl">+</span>
+            Añadir banco
+          </button>
+        </div>
+        <p className="texto-2 mt-1.5 px-1 text-xs">Toca una cuenta para actualizar su saldo.</p>
+      </section>
+      {cuentaAbierta && <FormCuenta cuenta={cuentaAbierta === 'nueva' ? undefined : cuentaAbierta} onCerrar={() => setCuentaAbierta(null)} />}
 
       {/* Últimos movimientos */}
       {grupos.length > 0 && (

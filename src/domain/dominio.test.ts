@@ -122,3 +122,13 @@ describe('cálculos', () => {
     expect(racha(new Set([]), '2026-11-13', prev)).toBe(0);
   });
 });
+
+import { saldoInicialPara } from './bancos';
+describe('bancos', () => {
+  it('ajusta el saldo inicial para que el saldo actual sea el que ves en el banco', () => {
+    // inicial 1.000 €, gastos apuntados −200 € → actual 800 €; el banco dice 750 €
+    expect(saldoInicialPara(75000, 80000, 100000)).toBe(95000);
+    // cuenta nueva sin movimientos
+    expect(saldoInicialPara(123456, 0, 0)).toBe(123456);
+  });
+});

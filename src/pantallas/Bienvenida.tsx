@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { configurarInicial } from '../db/acciones';
 import { aCentimos } from '../domain/dinero';
+import { ENTIDADES } from '../domain/bancos';
 import { CampoImporte } from '../components/Selectores';
+import { IconoCerrar } from '../components/Iconos';
 import { MONEDAS } from './Ajustes';
 import type { TipoCuenta } from '../domain/tipos';
 
 interface CuentaInicial {
-  activa: boolean;
   nombre: string;
   tipo: TipoCuenta;
   icono: string;
@@ -14,21 +15,23 @@ interface CuentaInicial {
   saldo: string;
 }
 
+const EFECTIVO: CuentaInicial = { nombre: 'Efectivo', tipo: 'efectivo', icono: '💵', color: '#16a34a', saldo: '' };
+
 export function Bienvenida() {
   const [paso, setPaso] = useState(0);
   const [moneda, setMoneda] = useState('EUR');
-  const [cuentas, setCuentas] = useState<CuentaInicial[]>([
-    { activa: true, nombre: 'Banco', tipo: 'banco', icono: '🏦', color: '#2563eb', saldo: '' },
-    { activa: true, nombre: 'Efectivo', tipo: 'efectivo', icono: '💵', color: '#16a34a', saldo: '' },
-    { activa: false, nombre: 'Ahorro', tipo: 'ahorro', icono: '🐷', color: '#db2777', saldo: '' },
-  ]);
+  const [cuentas, setCuentas] = useState<CuentaInicial[]>([EFECTIVO]);
+  const [otro, setOtro] = useState('');
   const cambiar = (i: number, c: Partial<CuentaInicial>) => setCuentas(cuentas.map((x, j) => (j === i ? { ...x, ...c } : x)));
-  const activas = cuentas.filter((c) => c.activa && c.nombre.trim());
+  const tiene = (n: string) => cuentas.some((c) => c.nombre.toLowerCase() === n.toLowerCase());
+  const anadir = (c: CuentaInicial) => !tiene(c.nombre) && setCuentas([...cuentas, c]);
+  const quitar = (i: number) => setCuentas(cuentas.filter((_, j) => j !== i));
+  const validas = cuentas.filter((c) => c.nombre.trim());
 
   async function terminar() {
     await configurarInicial(
       moneda,
-      activas.map((c) => ({ nombre: c.nombre.trim(), tipo: c.tipo, icono: c.icono, color: c.color, saldoInicial: aCentimos(c.saldo) })),
+      validas.map((c) => ({ nombre: c.nombre.trim(), tipo: c.tipo, icono: c.icono, color: c.color, saldoInicial: aCentimos(c.saldo) })),
     );
   }
 
@@ -70,16 +73,41 @@ export function Bienvenida() {
       {paso === 1 && (
         <div className="anim-aparecer flex flex-1 flex-col">
           <h1 className="text-2xl font-bold tracking-tight">¿Dónde tienes tu dinero?</h1>
-          <p className="texto-2 mt-2">Marca tus cuentas y, si quieres, cuánto tienes ahora en cada una. Puedes cambiarlo después.</p>
-          <div className="mt-6 flex flex-col gap-3">
+          <p className="texto-2 mt-2">Toca tus bancos y escribe cuánto tienes hoy en cada uno. Podrás cambiarlo después.</p>
+
+          <div className="mt-5 flex flex-wrap gap-2">
+            {ENTIDADES.filter((e) => !tiene(e.nombre)).map((e) => (
+              <button key={e.nombre} className="chip" onClick={() => anadir({ ...e, saldo: '' })}>
+                + {e.nombre}
+              </button>
+            ))}
+          </div>
+          <form
+            className="mt-2 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (otro.trim()) anadir({ nombre: otro.trim(), tipo: 'banco', icono: '🏦', color: '#2563eb', saldo: '' });
+              setOtro('');
+            }}
+          >
+            <input className="campo" placeholder="Otro banco o cuenta" value={otro} onChange={(e) => setOtro(e.target.value)} maxLength={30} />
+            <button className="boton boton-secundario" disabled={!otro.trim()}>
+              Añadir
+            </button>
+          </form>
+
+          <div className="mt-5 flex flex-col gap-2">
             {cuentas.map((c, i) => (
-              <div key={i} className="tarjeta flex items-center gap-3 p-3" style={{ opacity: c.activa ? 1 : 0.55 }}>
-                <input type="checkbox" className="h-5 w-5 accent-[var(--color-marca)]" checked={c.activa} onChange={(e) => cambiar(i, { activa: e.target.checked })} aria-label={`Usar ${c.nombre}`} />
-                <span className="text-2xl">{c.icono}</span>
-                <input className="min-w-0 flex-1 bg-transparent font-medium outline-none" value={c.nombre} onChange={(e) => cambiar(i, { nombre: e.target.value })} />
+              <div key={c.nombre + i} className="tarjeta flex items-center gap-3 p-3">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c.color }} />
+                <span className="text-xl">{c.icono}</span>
+                <span className="min-w-0 flex-1 truncate font-medium">{c.nombre}</span>
                 <div className="w-28">
-                  <CampoImporte valor={c.saldo} onCambio={(v) => cambiar(i, { saldo: v, activa: true })} placeholder="Saldo" />
+                  <CampoImporte valor={c.saldo} onCambio={(v) => cambiar(i, { saldo: v })} placeholder="Saldo" />
                 </div>
+                <button className="texto-2 -mr-1 p-1" onClick={() => quitar(i)} aria-label={`Quitar ${c.nombre}`}>
+                  <IconoCerrar width={18} height={18} />
+                </button>
               </div>
             ))}
           </div>
@@ -88,7 +116,7 @@ export function Bienvenida() {
             <button className="boton boton-secundario" onClick={() => setPaso(0)}>
               Atrás
             </button>
-            <button className="boton boton-primario flex-1" onClick={terminar} disabled={activas.length === 0}>
+            <button className="boton boton-primario flex-1" onClick={terminar} disabled={validas.length === 0}>
               ¡Listo!
             </button>
           </div>

@@ -9,4 +9,5 @@
 - **Recurrentes:** se generan al abrir la app y al volver a ella. Al reanudar uno pausado no se rellenan los meses en pausa.
 - **Racha:** días seguidos en que has apuntado algo a mano (los recurrentes automáticos no cuentan).
 - **Presupuestos solo mensuales** en esta versión (sin arrastre de sobrante).
+- **Saldo de cada banco:** al escribir el saldo que ves hoy en tu banco se ajusta el saldo inicial de la cuenta, en vez de crear un movimiento de «ajuste», para que no altere gastos ni ingresos.
 - **Pendiente para próximas versiones:** importar CSV del banco, detector de suscripciones, objetivos de ahorro, recordatorio diario con notificación, multimoneda por movimiento.

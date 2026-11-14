@@ -17,7 +17,12 @@ const capturas = process.argv[2];
   await p.goto(URL_APP);
   // Bienvenida
   await p.getByRole('button', { name: 'Empezar' }).click();
-  await p.locator('input[placeholder="Saldo"]').first().fill('1500');
+  await p.getByRole('button', { name: '+ BBVA' }).click();
+  await p.getByRole('button', { name: '+ Revolut' }).click();
+  await p.getByPlaceholder('Otro banco o cuenta').fill('Hucha');
+  await p.getByRole('button', { name: 'Añadir', exact: true }).click();
+  await p.locator('input[placeholder="Saldo"]').nth(1).fill('1500');
+  await p.locator('input[placeholder="Saldo"]').nth(2).fill('320,50');
   await foto('01-bienvenida');
   await p.getByRole('button', { name: '¡Listo!' }).click();
   await p.getByText('Apunta tu primer gasto').waitFor();
@@ -121,6 +126,20 @@ const capturas = process.argv[2];
   await p.getByText('Copia restaurada').waitFor();
   await p.getByRole('button', { name: 'Inicio' }).click();
   assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /77,49/);
+
+  // Actualizar el saldo de un banco desde el inicio (no debe contar como gasto)
+  await p.getByRole('button', { name: 'Revolut: actualizar saldo' }).click();
+  await p.locator('input[inputmode=decimal]').fill('300');
+  await p.getByText(/No cuenta como gasto/).waitFor();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByText(/Revolut: saldo 300,00/).waitFor();
+  assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /77,49/);
+  await p.getByRole('button', { name: 'Añadir banco' }).click();
+  await p.getByRole('button', { name: 'Openbank' }).click();
+  await p.locator('input[inputmode=decimal]').fill('1000');
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByRole('button', { name: 'Openbank: actualizar saldo' }).waitFor();
+  await foto('09-cuentas');
 
   // Modo oscuro
   await p.emulateMedia({ colorScheme: 'dark' });

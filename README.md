@@ -5,6 +5,7 @@ App personal para controlar gastos e ingresos día a día. **Apunta un gasto en 
 ## Qué puedes hacer
 
 - **Añadir un gasto en 3 toques:** botón **+** → importe → categoría (se guarda al tocarla). Con *Deshacer* durante 5 s.
+- **Tus bancos** (BBVA, Santander, CaixaBank, Revolut, Openbank, ING, N26…) o cualquier otra cuenta, con el **saldo actual** de cada uno y el total.
 - Ingresos, gastos y **transferencias** entre cuentas (no cuentan como gasto).
 - Fecha rápida (Hoy / Ayer / Otra), cuenta, **nota con #etiquetas** (`Cena #viaje`) y **sugerencia automática de categoría** según tu historial.
 - **Inicio:** balance del mes, *«te quedan X € para N días: unos Y € al día»*, gasto por categoría, saldos de cuentas, últimos movimientos y racha de días apuntando.
