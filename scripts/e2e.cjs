@@ -1,0 +1,136 @@
+// Prueba de extremo a extremo del flujo principal.
+// Uso: npm run build && npx vite preview --port 4173 & node scripts/e2e.cjs [carpeta-capturas]
+const { chromium, devices } = require('playwright');
+const assert = require('node:assert');
+const URL_APP = process.env.URL_APP ?? 'http://localhost:4173/';
+const capturas = process.argv[2];
+
+(async () => {
+  const navegador = await chromium.launch();
+  const ctx = await navegador.newContext({ ...devices['Pixel 7'], deviceScaleFactor: 1, locale: 'es-ES', acceptDownloads: true });
+  const p = await ctx.newPage();
+  const errores = (globalThis.__errores = []);
+  p.on('pageerror', (e) => errores.push(e.message));
+  p.on('console', (m) => m.type() === 'error' && errores.push(m.text()));
+  const foto = async (n) => capturas && p.screenshot({ path: `${capturas}/${n}.png`, fullPage: true });
+
+  await p.goto(URL_APP);
+  // Bienvenida
+  await p.getByRole('button', { name: 'Empezar' }).click();
+  await p.locator('input[placeholder="Saldo"]').first().fill('1500');
+  await foto('01-bienvenida');
+  await p.getByRole('button', { name: '¡Listo!' }).click();
+  await p.getByText('Apunta tu primer gasto').waitFor();
+  await foto('02-inicio-vacio');
+
+  // Gasto rápido: + → 4,50 → Restaurantes
+  await p.getByRole('button', { name: 'Añadir movimiento' }).click();
+  for (const t of ['4', ',', '5']) await p.getByRole('button', { name: t, exact: true }).click();
+  assert.match(await p.getByTestId('importe').innerText(), /4,5/);
+  await foto('03-editor');
+  await p.getByRole('button', { name: /Restaurantes/ }).click();
+  await p.getByText(/Restaurantes · 4,50/).waitFor();
+
+  // Ingreso: nómina 2.000
+  await p.getByRole('button', { name: 'Añadir movimiento' }).click();
+  await p.getByRole('tab', { name: 'Ingreso' }).click();
+  for (const t of ['2', '0', '0', '0']) await p.getByRole('button', { name: t, exact: true }).click();
+  await p.getByRole('button', { name: /Nómina/ }).click();
+
+  // Gasto con nota y etiqueta
+  await p.getByRole('button', { name: 'Añadir movimiento' }).click();
+  for (const t of ['6', '0']) await p.getByRole('button', { name: t, exact: true }).click();
+  await p.getByRole('button', { name: /Nota/ }).click();
+  await p.getByPlaceholder(/Nota/).fill('Mercadona #casa');
+  await p.getByRole('button', { name: /Supermercado/ }).first().click();
+
+  // Transferencia Banco → Efectivo 50
+  await p.getByRole('button', { name: 'Añadir movimiento' }).click();
+  await p.getByRole('tab', { name: 'Transferencia' }).click();
+  for (const t of ['5', '0']) await p.getByRole('button', { name: t, exact: true }).click();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+
+  await p.waitForTimeout(300);
+  const gastos = await p.getByTestId('gastos').innerText();
+  const balance = await p.getByTestId('balance').innerText();
+  assert.match(gastos.replace(/\s/g, ' '), /64,50/, 'gastos = 4,50 + 60 (la transferencia no cuenta)');
+  assert.match(balance.replace(/\s/g, ' '), /1\.935,50/, 'balance');
+  await foto('04-inicio');
+
+  // Autocategorización: escribir "merca" sugiere Supermercado
+  await p.getByRole('button', { name: 'Añadir movimiento' }).click();
+  await p.getByRole('button', { name: /Nota/ }).click();
+  await p.getByPlaceholder(/Nota/).fill('merca');
+  await p.getByRole('button', { name: /¿🛒 Supermercado\?/ }).waitFor();
+  await p.getByRole('button', { name: 'Cerrar', exact: true }).click();
+
+  // Editar y borrar con deshacer
+  await p.locator('section', { hasText: 'Últimos movimientos' }).getByRole('button', { name: /Restaurantes/ }).click();
+  await p.getByRole('button', { name: 'Eliminar' }).click();
+  await p.getByRole('button', { name: 'Deshacer' }).click();
+  await p.getByText('Restaurado').waitFor();
+  assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /64,50/);
+
+  // Movimientos
+  await p.getByRole('button', { name: 'Movimientos', exact: true }).click();
+  await p.getByPlaceholder(/Buscar/).fill('mercadona');
+  await p.getByRole('button', { name: /Mercadona/ }).waitFor();
+  await p.getByPlaceholder(/Buscar/).fill('');
+  await foto('05-movimientos');
+
+  // Análisis
+  await p.getByRole('button', { name: 'Análisis' }).click();
+  await p.getByText('Calendario de gastos').waitFor();
+  await foto('06-analisis');
+
+  // Ajustes → presupuesto total
+  await p.getByRole('button', { name: 'Ajustes' }).click();
+  await foto('07-ajustes');
+  await p.getByRole('button', { name: /Presupuestos/ }).click();
+  await p.getByRole('button', { name: 'Definir' }).click();
+  await p.locator('input[inputmode=decimal]').fill('800');
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByRole('button', { name: 'Inicio' }).click();
+  await p.getByText(/de presupuesto para/).waitFor();
+
+  // Recurrente mensual que empezó hace 2 meses → genera 3
+  await p.getByRole('button', { name: 'Ajustes' }).click();
+  await p.getByRole('button', { name: /Recurrentes/ }).click();
+  await p.getByRole('button', { name: '+ Nuevo recurrente' }).click();
+  await p.getByPlaceholder(/Nombre/).fill('Netflix');
+  await p.getByPlaceholder('Importe').fill('12,99');
+  await p.locator('select').first().selectOption({ label: '📺 Suscripciones' });
+  const d = new Date();
+  d.setMonth(d.getMonth() - 2);
+  await p.locator('input[type=date]').fill(d.toISOString().slice(0, 10));
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByText(/3 movimientos añadidos/).waitFor();
+
+  // Copia de seguridad: exportar, borrar todo, restaurar
+  await p.getByRole('button', { name: /Ajustes/ }).first().click();
+  const [descarga] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Crear copia/ }).click()]);
+  const ruta = await descarga.path();
+  p.on('dialog', (dl) => dl.accept());
+  await p.getByRole('button', { name: /Borrar todos/ }).click();
+  await p.getByRole('button', { name: 'Empezar' }).waitFor();
+  // Restaurar desde la bienvenida no es posible, así que se configura y se restaura desde Ajustes
+  await p.getByRole('button', { name: 'Empezar' }).click();
+  await p.getByRole('button', { name: '¡Listo!' }).click();
+  await p.getByRole('button', { name: 'Ajustes' }).click();
+  await p.locator('input[type=file]').setInputFiles(ruta);
+  await p.getByText('Copia restaurada').waitFor();
+  await p.getByRole('button', { name: 'Inicio' }).click();
+  assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /77,49/);
+
+  // Modo oscuro
+  await p.emulateMedia({ colorScheme: 'dark' });
+  await foto('08-inicio-oscuro');
+
+  assert.deepStrictEqual(errores, [], 'Sin errores en consola');
+  console.log('E2E OK');
+  await navegador.close();
+})().catch((e) => {
+  console.error('Errores de página:', globalThis.__errores);
+  console.error(e);
+  process.exit(1);
+});
