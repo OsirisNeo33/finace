@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import { FormCuenta } from './ajustes/Cuentas';
 import type { Cuenta } from '../domain/tipos';
-import { addDays, parseISO } from 'date-fns';
+import { addDays } from 'date-fns';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { Anillo, type Porcion } from '../components/Anillo';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { Barra } from '../components/Barra';
 import { IconoFuego } from '../components/Iconos';
-import { agruparPorDia, enPeriodo, progresoPresupuestos, racha, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
+import { agruparPorDia, enPeriodo, progresoPresupuestos, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
 import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import type { PropsPantalla } from './tipos';
 import { usarPagos } from './usarPagos';
+import { usarJuego } from './usarJuego';
 import { FilaPago } from './Pagos';
 
 export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: PropsPantalla) {
@@ -57,11 +58,8 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
     [movsPeriodo, categoriaPorId],
   );
 
-  // Racha: días seguidos en los que has apuntado algo (los recurrentes automáticos no cuentan)
-  const nRacha = useMemo(() => {
-    const dias = new Set(movimientos.filter((m) => !m.recurrenteId).map((m) => aISO(new Date(m.creadoEn))));
-    return racha(dias, hoyISO(), (d) => aISO(addDays(parseISO(d), -1)));
-  }, [movimientos]);
+  const juego = usarJuego();
+  const reto = juego.retos.find((r) => !r.completado);
 
   const grupos = agruparPorDia(movsPeriodo).slice(0, 5);
 
@@ -69,11 +67,12 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
     <div className="flex flex-col gap-4 px-4 pt-4">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Finace</h1>
-        {nRacha > 0 && (
-          <span className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold text-orange-600 dark:text-orange-400" style={{ background: 'var(--superficie)' }} title="Días seguidos apuntando movimientos">
-            <IconoFuego width={16} height={16} /> {nRacha} {nRacha === 1 ? 'día' : 'días'}
+        <button className="flex items-center gap-2 rounded-full py-1 pr-3 pl-1 text-sm font-semibold" style={{ background: 'var(--superficie)', border: '1px solid var(--borde)' }} onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
+          <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-[var(--color-marca)] px-1.5 text-xs text-white dark:text-teal-950">Nv {juego.nivel}</span>
+          <span className="flex items-center gap-0.5 text-orange-600 dark:text-orange-400">
+            <IconoFuego width={16} height={16} /> {juego.racha}
           </span>
-        )}
+        </button>
       </header>
 
       <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={setDesplazamiento} diaInicio={ajustes.diaInicioMes} />
@@ -114,6 +113,21 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
         )}
         {global && <div className="mt-2"><Barra porcentaje={global.importe ? r.gastos / global.importe : 0} /></div>}
       </section>
+
+      {/* Nivel y reto semanal */}
+      {movimientos.length > 0 && esActual && (
+        <button className="tarjeta flex items-center gap-3 p-4 text-left" onClick={() => ir('logros')}>
+          <span className="text-2xl">{reto ? reto.icono : '🏆'}</span>
+          <span className="min-w-0 flex-1">
+            <span className="texto-2 block text-xs">{reto ? `Reto de la semana · +${reto.xp} XP` : `Nivel ${juego.nivel} · ${juego.nombre}`}</span>
+            <span className="block truncate text-sm font-medium">{reto ? reto.nombre : '¡Retos de la semana completados!'}</span>
+            <span className="mt-1.5 block">
+              <Barra porcentaje={reto ? reto.actual / reto.meta : juego.progreso} color="var(--color-marca)" />
+            </span>
+          </span>
+          <span className="texto-2 text-xs">{reto ? `${reto.actual}/${reto.meta}` : `${juego.xpEnNivel}/${juego.xpParaSubir}`}</span>
+        </button>
+      )}
 
       {movimientos.length === 0 && (
         <section className="tarjeta p-6 text-center">

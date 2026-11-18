@@ -67,4 +67,8 @@ export interface Ajustes {
   tema: 'sistema' | 'claro' | 'oscuro';
   ultimaCuentaId?: string;
   configurado: boolean;
+  // Gamificación
+  logrosVistos?: string[];
+  nivelVisto?: number;
+  copias?: number;
 }

@@ -159,3 +159,55 @@ body {
     animation: none;
   }
 }
+
+/* Gamificación */
+@keyframes confeti {
+  from {
+    transform: translateY(-10vh) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(105vh) rotate(540deg);
+    opacity: 0.7;
+  }
+}
+@keyframes premio {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes latido {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+.anim-confeti {
+  animation: confeti 2s ease-in forwards;
+}
+.anim-premio {
+  animation: premio 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+.anim-latido {
+  animation: latido 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-confeti {
+    display: none;
+  }
+  .anim-premio,
+  .anim-latido {
+    animation: none;
+  }
+}

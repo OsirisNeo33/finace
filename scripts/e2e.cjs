@@ -14,6 +14,12 @@ const capturas = process.argv[2];
   p.on('console', (m) => m.type() === 'error' && errores.push(m.text()));
   const foto = async (n) => capturas && p.screenshot({ path: `${capturas}/${n}.png`, fullPage: true });
 
+  // Las celebraciones de logros tapan la pantalla: se cierran solas durante la prueba
+  let premios = 0;
+  await p.addLocatorHandler(p.getByRole('button', { name: '¡Genial!' }), async () => {
+    premios++;
+    await p.getByRole('button', { name: '¡Genial!' }).click();
+  });
   await p.goto(URL_APP);
   // Bienvenida
   await p.getByRole('button', { name: 'Empezar' }).click();
@@ -75,6 +81,13 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Deshacer' }).click();
   await p.getByText('Restaurado').waitFor();
   assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /64,50/);
+
+  // Gamificación: el primer gasto desbloquea «Primer paso» y hay nivel y XP
+  await p.getByRole('button', { name: /Ver logros/ }).first().click();
+  await p.getByText('Retos de esta semana').waitFor();
+  assert.strictEqual(await p.locator('[data-logro="primer-paso"]').getAttribute('data-desbloqueado'), 'true');
+  assert.ok(premios >= 1, 'se celebró al menos una insignia');
+  await foto('11-logros');
 
   // Movimientos
   await p.getByRole('button', { name: 'Movimientos', exact: true }).click();

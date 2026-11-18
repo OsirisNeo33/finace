@@ -26,7 +26,7 @@ interface EventoInstalar extends Event {
   prompt: () => Promise<void>;
 }
 
-export function Ajustes() {
+export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
   const [sub, setSub] = useState<Sub>(null);
   const { ajustes, cuentas, categorias, avisar } = useDatos();
   const archivo = useRef<HTMLInputElement>(null);
@@ -80,6 +80,7 @@ export function Ajustes() {
       <h1 className="text-2xl font-bold tracking-tight">Ajustes</h1>
 
       <Grupo titulo="Organización">
+        <Fila icono="🏆" texto="Logros y nivel" onClick={() => irA('logros')} />
         <Fila icono="🏦" texto="Cuentas" detalle={String(cuentas.length)} onClick={() => setSub('cuentas')} />
         <Fila icono="🏷️" texto="Categorías" detalle={String(categorias.length)} onClick={() => setSub('categorias')} />
         <Fila icono="🎯" texto="Presupuestos" onClick={() => setSub('presupuestos')} />
@@ -133,6 +134,7 @@ export function Ajustes() {
           onClick={async () => {
             try {
               await descargar(`finace-copia-${hoyISO()}.json`, JSON.stringify(await exportarJSON()), 'application/json');
+              await guardarAjustes({ copias: (ajustes.copias ?? 0) + 1 });
               avisar('Copia creada');
             } catch {
               /* el usuario cerró el menú Compartir */

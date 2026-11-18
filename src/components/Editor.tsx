@@ -92,11 +92,12 @@ export function Editor() {
       await guardarRecurrente({ id: recurrenteId, tipo, importe, cuentaId, categoriaId: catId, nota: n || undefined, frecuencia: repetir, inicio: fecha, ultimaGeneracion: fecha, activo: true });
       datos.recurrenteId = recurrenteId;
     }
+    const primeroHoy = !movimientos.some((m) => !m.recurrenteId && aISO(new Date(m.creadoEn)) === hoy);
     const id = await crearMovimiento(datos);
     navigator.vibrate?.(15);
     cerrarEditor();
     const nombre = tipo === 'transferencia' ? 'Transferencia' : categorias.find((c) => c.id === catId)?.nombre ?? '';
-    avisar(`${nombre} · ${dinero(importe)} guardado`, {
+    avisar(`${nombre} · ${dinero(importe)} guardado${datos.recurrenteId ? '' : ` · +${primeroHoy ? 15 : 5} XP`}`, {
       etiqueta: 'Deshacer',
       hacer: async () => {
         await db.movimientos.delete(id);

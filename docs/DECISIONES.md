@@ -11,4 +11,5 @@
 - **Presupuestos solo mensuales** en esta versión (sin arrastre de sobrante).
 - **Saldo de cada banco:** al escribir el saldo que ves hoy en tu banco se ajusta el saldo inicial de la cuenta, en vez de crear un movimiento de «ajuste», para que no altere gastos ni ingresos.
 - **Pagos recurrentes «solo recordatorio»:** no se apuntan solos; aparecen en el calendario como pendientes (en rojo si se pasa la fecha) hasta que pulsas «Marcar pagado», que apunta el gasto en esa fecha.
+- **Gamificación calculada a partir de tus datos:** el XP, el nivel, las insignias y los retos se calculan cada vez desde los movimientos, así que viajan con la copia de seguridad y no se pueden «perder». Solo se guarda qué insignias ya se celebraron. Los movimientos recurrentes automáticos no dan XP ni cuentan para la racha.
 - **Pendiente para próximas versiones:** importar CSV del banco, detector de suscripciones, objetivos de ahorro, recordatorio diario con notificación, multimoneda por movimiento.

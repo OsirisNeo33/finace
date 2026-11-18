@@ -9,11 +9,13 @@ import { Estadisticas } from './pantallas/Estadisticas';
 import { Ajustes } from './pantallas/Ajustes';
 import { Bienvenida } from './pantallas/Bienvenida';
 import { Pagos } from './pantallas/Pagos';
+import { Logros } from './pantallas/Logros';
+import { Celebracion } from './components/Celebracion';
 import { IconoCalendario } from './components/Iconos';
 import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
-export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'estadisticas' | 'ajustes';
+export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'estadisticas' | 'ajustes' | 'logros';
 
 export default function App() {
   return (
@@ -74,7 +76,8 @@ function Contenido() {
       {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
       {pestana === 'pagos' && <Pagos />}
       {pestana === 'estadisticas' && <Estadisticas {...props} />}
-      {pestana === 'ajustes' && <Ajustes />}
+      {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} />}
+      {pestana === 'logros' && <Logros />}
 
       <nav className="pb-seguro fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur" style={{ borderColor: 'var(--borde)', background: 'color-mix(in srgb, var(--superficie) 88%, transparent)' }}>
         <div className="mx-auto grid max-w-2xl grid-cols-6 items-center">
@@ -96,6 +99,7 @@ function Contenido() {
       </nav>
 
       {editor.abierto && <Editor />}
+      {!editor.abierto && <Celebracion onVerLogros={() => ir('logros')} />}
       <Aviso />
     </div>
   );
