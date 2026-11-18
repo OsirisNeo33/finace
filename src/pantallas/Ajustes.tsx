@@ -73,7 +73,7 @@ export function Ajustes() {
   }
 
   const esIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const instalada = window.matchMedia('(display-mode: standalone)').matches;
+  const instalada = window.matchMedia('(display-mode: standalone)').matches || 'Capacitor' in window;
 
   return (
     <div className="flex flex-col gap-5 px-4 pt-4">
@@ -126,13 +126,17 @@ export function Ajustes() {
       </Grupo>
 
       <Grupo titulo="Tus datos" pie="Todo se guarda solo en este dispositivo. Haz una copia de seguridad de vez en cuando (por ejemplo, a Google Drive o iCloud) para no perder nada si cambias de móvil.">
-        <Fila icono="📊" texto="Exportar a Excel (CSV)" onClick={async () => descargar(`finace-${hoyISO()}.csv`, await exportarCSV(), 'text/csv;charset=utf-8')} />
+        <Fila icono="📊" texto="Exportar a Excel (CSV)" onClick={async () => descargar(`finace-${hoyISO()}.csv`, await exportarCSV(), 'text/csv;charset=utf-8').catch(() => {})} />
         <Fila
           icono="💾"
           texto="Crear copia de seguridad"
           onClick={async () => {
-            descargar(`finace-copia-${hoyISO()}.json`, JSON.stringify(await exportarJSON()), 'application/json');
-            avisar('Copia descargada');
+            try {
+              await descargar(`finace-copia-${hoyISO()}.json`, JSON.stringify(await exportarJSON()), 'application/json');
+              avisar('Copia creada');
+            } catch {
+              /* el usuario cerró el menú Compartir */
+            }
           }}
         />
         <Fila icono="📥" texto="Restaurar copia de seguridad" onClick={() => archivo.current?.click()} />

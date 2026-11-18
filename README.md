@@ -29,6 +29,20 @@ App personal para controlar gastos e ingresos día a día. **Apunta un gasto en 
 1. En GitHub: **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 2. Fusiona esta rama en `main`. El workflow `.github/workflows/deploy.yml` ejecuta los tests, compila y publica automáticamente en cada cambio de `main`.
 
+## App nativa de iPhone (con un Mac)
+
+El proyecto de Xcode está en `ios/` (Capacitor). En el Mac:
+
+```bash
+git clone https://github.com/OsirisNeo33/finace.git && cd finace
+npm install
+npm run ios        # compila la web, la copia al proyecto iOS y abre Xcode
+```
+
+En Xcode: **App → Signing & Capabilities → Team** (tu Apple ID), conecta el iPhone y pulsa ▶︎.
+Cada vez que cambie el código: `git pull && npm install && npm run ios:sync` y vuelve a pulsar ▶︎.
+Los iconos se regeneran con `npm run iconos`.
+
 ## Desarrollo
 
 ```bash

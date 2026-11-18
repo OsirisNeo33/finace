@@ -5,6 +5,8 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 // BASE_PATH lo define el workflow de GitHub Pages (/finace/); en local es "/".
 const base = process.env.BASE_PATH ?? '/';
+// En la app nativa de iOS (Capacitor) no hace falta el service worker de la PWA.
+const esNativa = process.env.CAPACITOR === '1';
 
 export default defineConfig({
   base,
@@ -12,6 +14,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      disable: esNativa,
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {

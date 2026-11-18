@@ -44,6 +44,8 @@ body {
 
 body {
   min-height: 100dvh;
+  /* Deja sitio a la barra de estado (hora, batería) en la app de iPhone */
+  padding-top: env(safe-area-inset-top);
 }
 
 @layer components {

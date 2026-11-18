@@ -1,14 +1,16 @@
 {
   "name": "finace",
   "version": "1.0.0",
-  "description": "App personal para controlar gastos e ingresos día a día.",
+  "description": "App personal para controlar gastos e ingresos d\u00eda a d\u00eda.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "e2e": "node scripts/e2e.cjs",
-    "iconos": "node scripts/iconos.cjs"
+    "iconos": "node scripts/iconos.cjs",
+    "ios": "CAPACITOR=1 vite build && cap sync ios && cap open ios",
+    "ios:sync": "CAPACITOR=1 vite build && cap sync ios"
   },
   "repository": {
     "type": "git",
@@ -22,6 +24,10 @@
   },
   "homepage": "https://github.com/OsirisNeo33/finace#readme",
   "dependencies": {
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/ios": "^8.6.2",
+    "@capacitor/share": "^8.0.3",
     "date-fns": "^4.4.0",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
@@ -30,6 +36,7 @@
     "recharts": "^3.10.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@tailwindcss/vite": "^4.3.5",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
