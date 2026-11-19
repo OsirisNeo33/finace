@@ -183,9 +183,9 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
 
         {/* Próximos pagos */}
         {proximos.length > 0 && esActual && (
-          <Panel title="Próximos pagos" detail={<PanelLink onClick={() => ir('pagos')}>Ver calendario</PanelLink>}>
+          <Panel title="Próximos pagos" detail={<PanelLink onClick={() => ir('calendario')}>Ver calendario</PanelLink>}>
             {proximos.map((p) => (
-              <FilaPago key={p.clave} p={p} mostrarFecha onEditar={() => ir('pagos')} />
+              <FilaPago key={p.clave} p={p} mostrarFecha onEditar={() => ir('calendario')} />
             ))}
           </Panel>
         )}

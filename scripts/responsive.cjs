@@ -156,7 +156,17 @@ const revisar = () => {
     await p.getByRole('button', { name: 'Cerrar', exact: true }).click();
     await tab('Movimientos');
     await mirar('movimientos');
-    await tab('Pagos');
+    await tab('Contabilidad');
+    await mirar('contabilidad');
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+    await mirar('contabilidad-medio');
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await mirar('contabilidad-final');
+    await p.getByRole('button', { name: 'Ingreso fijo', exact: true }).click();
+    await mirar('hoja-ingreso-fijo');
+    await p.getByRole('button', { name: 'Cerrar' }).click();
+    await arriba();
+    await p.getByRole('tab', { name: 'Calendario de pagos' }).click();
     await mirar('pagos');
     await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await mirar('pagos-final');

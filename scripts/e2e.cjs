@@ -126,7 +126,8 @@ const capturas = process.argv[2];
   await p.getByText(/3 movimientos añadidos/).waitFor();
 
   // Calendario de pagos: Netflix (automático) aparece como pagado; añadir un recordatorio
-  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  await p.getByRole('button', { name: 'Contabilidad', exact: true }).click();
+  await p.getByRole('tab', { name: 'Calendario de pagos' }).click();
   await p.getByText('Pagos fijos este mes').waitFor();
   await p.locator('section', { hasText: 'Este mes' }).getByText('Pagado', { exact: true }).first().waitFor();
   await p.getByRole('button', { name: /Añadir suscripción o pago/ }).click();
@@ -147,7 +148,21 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Deshacer' }).click();
   await p.waitForTimeout(300);
   assert.strictEqual(await p.getByTestId('gastos').innerText(), gastosAntes);
-  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  // Contabilidad: ingreso fijo (nómina) y lo que queda libre tras los gastos fijos (Netflix 12,99 + Gimnasio 35)
+  await p.getByRole('button', { name: 'Contabilidad', exact: true }).click();
+  await p.getByRole('tab', { name: 'Resumen' }).click();
+  assert.match((await p.getByTestId('gastos-fijos').innerText()).replace(/\s/g, ' '), /47,99/);
+  await p.getByRole('button', { name: 'Ingreso fijo', exact: true }).click();
+  await p.getByText('Nuevo ingreso fijo').waitFor();
+  await p.getByLabel('Nombre').fill('Nómina');
+  await p.getByLabel('Importe').fill('2000');
+  await p.locator('select').first().selectOption({ index: 1 });
+  const dentro3 = new Date(Date.now() + 3 * 86400000);
+  await p.locator('input[type=date]').fill(`${dentro3.getFullYear()}-${String(dentro3.getMonth() + 1).padStart(2, '0')}-${String(dentro3.getDate()).padStart(2, '0')}`);
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByTestId('libre').filter({ hasText: '1.952,01' }).waitFor();
+  await foto('10-contabilidad');
+  await p.getByRole('tab', { name: 'Calendario de pagos' }).click();
   await foto('10-pagos');
   await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
 

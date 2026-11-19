@@ -17,7 +17,8 @@ const ESTADO: Record<Pago['estado'], { texto: string; tono: TonoChip }> = {
   vencido: { texto: 'Sin pagar', tono: 'danger' },
 };
 
-export function Pagos() {
+/** Calendario de pagos fijos. `embebido` lo muestra dentro de Contabilidad, sin cabecera propia. */
+export function Pagos({ embebido }: { embebido?: boolean } = {}) {
   const { dinero } = useDatos();
   const [desplazamiento, setDesplazamiento] = useState(0);
   const [diaSel, setDiaSel] = useState<string>();
@@ -43,18 +44,8 @@ export function Pagos() {
   const despues = Array.from({ length: 7 - getISODay(ultimo) }, (_, i) => aISO(addDays(ultimo, i + 1)));
   const visibles = diaSel ? porDia.get(diaSel) ?? [] : pagos;
 
-  return (
+  const contenido = (
     <>
-      <PageHeader
-        title="Pagos"
-        subtitle="Suscripciones, recibos y pagos que se repiten"
-        action={
-          <HeaderButton label="Añadir pago" onClick={() => setForm({ inicio: diaSel })}>
-            <IconoMas width={22} height={22} />
-          </HeaderButton>
-        }
-      />
-      <Page>
         <SelectorPeriodo
           periodo={periodo}
           desplazamiento={desplazamiento}
@@ -157,7 +148,22 @@ export function Pagos() {
         </Button>
 
         {form && <FormRecurrente r={form.r} inicioInicial={form.inicio} onCerrar={() => setForm(null)} />}
-      </Page>
+    </>
+  );
+  if (embebido) return contenido;
+
+  return (
+    <>
+      <PageHeader
+        title="Pagos"
+        subtitle="Suscripciones, recibos y pagos que se repiten"
+        action={
+          <HeaderButton label="Añadir pago" onClick={() => setForm({ inicio: diaSel })}>
+            <IconoMas width={22} height={22} />
+          </HeaderButton>
+        }
+      />
+      <Page>{contenido}</Page>
     </>
   );
 }

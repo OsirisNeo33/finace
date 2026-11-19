@@ -2,19 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProveedorDatos, useDatos } from './contexto';
 import { Editor } from './components/Editor';
 import { Aviso } from './components/Aviso';
-import { IconoAjustes, IconoGrafico, IconoHoy, IconoLista, IconoMas, IconoCalendario } from './components/Iconos';
+import { IconoAjustes, IconoGrafico, IconoHoy, IconoLista, IconoMas, IconoMoneda } from './components/Iconos';
 import { Inicio } from './pantallas/Inicio';
 import { Movimientos, type Filtro } from './pantallas/Movimientos';
 import { Estadisticas } from './pantallas/Estadisticas';
 import { Ajustes } from './pantallas/Ajustes';
 import { Bienvenida } from './pantallas/Bienvenida';
-import { Pagos } from './pantallas/Pagos';
+import { Contabilidad, type VistaContabilidad } from './pantallas/Contabilidad';
 import { Logros } from './pantallas/Logros';
 import { Celebracion } from './components/Celebracion';
 import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
-export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'estadisticas' | 'ajustes' | 'logros';
+/** 'calendario' abre Contabilidad directamente en su calendario de pagos. */
+export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'calendario' | 'estadisticas' | 'ajustes' | 'logros';
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ function Contenido() {
   const [pestana, setPestana] = useState<Pestana>('inicio');
   const [desplazamiento, setDesplazamiento] = useState(0);
   const [filtro, setFiltro] = useState<Filtro>({});
+  const [vistaConta, setVistaConta] = useState<VistaContabilidad>('resumen');
   usarTema(ajustes.tema);
 
   const periodo = useMemo(() => periodoDe(new Date(), ajustes.diaInicioMes, desplazamiento), [ajustes.diaInicioMes, desplazamiento]);
@@ -65,7 +67,8 @@ function Contenido() {
 
   const ir = (p: Pestana, f?: Filtro) => {
     if (f) setFiltro(f);
-    setPestana(p);
+    if (p === 'calendario' || p === 'pagos') setVistaConta(p === 'calendario' ? 'calendario' : 'resumen');
+    setPestana(p === 'calendario' ? 'pagos' : p);
   };
   const props = { periodo, desplazamiento, setDesplazamiento, ir };
 
@@ -74,7 +77,7 @@ function Contenido() {
       <main>
         {pestana === 'inicio' && <Inicio {...props} />}
         {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
-        {pestana === 'pagos' && <Pagos />}
+        {pestana === 'pagos' && <Contabilidad vista={vistaConta} setVista={setVistaConta} />}
         {pestana === 'estadisticas' && <Estadisticas {...props} />}
         {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} />}
         {pestana === 'logros' && <Logros onVolver={() => ir('inicio')} />}
@@ -132,7 +135,7 @@ function Contenido() {
 const PESTANAS = [
   { id: 'inicio', texto: 'Hoy', corto: undefined, Icono: IconoHoy },
   { id: 'movimientos', texto: 'Movimientos', corto: 'Movim.', Icono: IconoLista },
-  { id: 'pagos', texto: 'Pagos', corto: undefined, Icono: IconoCalendario },
+  { id: 'pagos', texto: 'Contabilidad', corto: 'Contab.', Icono: IconoMoneda },
   { id: 'estadisticas', texto: 'Análisis', corto: undefined, Icono: IconoGrafico },
   { id: 'ajustes', texto: 'Ajustes', corto: undefined, Icono: IconoAjustes },
 ] as const;
