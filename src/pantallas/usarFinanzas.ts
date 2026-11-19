@@ -11,6 +11,7 @@ export function usarFinanzas() {
   const inversiones = useLiveQuery(() => db.inversiones.toArray(), [], []);
   const recurrentes = useLiveQuery(() => db.recurrentes.toArray(), [], []);
   const cobros = useLiveQuery(() => db.cobros.toArray(), [], []);
+  const operaciones = useLiveQuery(() => db.operaciones.toArray(), [], []);
   const salud = useMemo(
     () =>
       evaluarSalud({
@@ -19,15 +20,16 @@ export function usarFinanzas() {
         deudas,
         inversiones,
         cobros,
+        operaciones,
         recurrentes,
         diaInicioMes: ajustes.diaInicioMes,
         hoy: new Date(),
         dinero: (c) => dinero(c),
         nombreCategoria: (id) => categoriaPorId.get(id)?.nombre ?? 'otros',
       }),
-    [movimientos, todasCuentas, deudas, inversiones, cobros, recurrentes, ajustes.diaInicioMes, dinero, categoriaPorId],
+    [movimientos, todasCuentas, deudas, inversiones, cobros, operaciones, recurrentes, ajustes.diaInicioMes, dinero, categoriaPorId],
   );
-  return { deudas, inversiones, cobros, recurrentes, salud };
+  return { deudas, inversiones, cobros, operaciones, recurrentes, salud };
 }
 
 export const NIVELES = {

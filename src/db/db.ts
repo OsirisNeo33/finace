@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Ajustes, Categoria, Cobro, Cuenta, Deuda, Inversion, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
+import type { Ajustes, Categoria, Cobro, Cuenta, Deuda, Operacion, Inversion, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
 
 export const db = new Dexie('finace') as Dexie & {
   cuentas: EntityTable<Cuenta, 'id'>;
@@ -11,6 +11,7 @@ export const db = new Dexie('finace') as Dexie & {
   deudas: EntityTable<Deuda, 'id'>;
   inversiones: EntityTable<Inversion, 'id'>;
   cobros: EntityTable<Cobro, 'id'>;
+  operaciones: EntityTable<Operacion, 'id'>;
 };
 
 db.version(1).stores({
@@ -43,6 +44,9 @@ db.version(3)
       await cats.add({ id: crypto.randomUUID(), nombre: CATEGORIA_DEVOLUCIONES, icono: '🤝', color: '#0891b2', tipo: 'ingreso', orden: ingresos.length, archivada: false });
     }
   });
+
+// v4: diario de trading.
+db.version(4).stores({ operaciones: 'id, inversionId, apertura' });
 
 export const nuevoId = () => crypto.randomUUID();
 

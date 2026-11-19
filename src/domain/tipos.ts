@@ -107,7 +107,7 @@ export interface Deuda {
   actualizadoEn: string;
 }
 
-export type TipoInversion = 'fondo' | 'etf' | 'acciones' | 'cripto' | 'pension' | 'deposito' | 'inmueble' | 'otro';
+export type TipoInversion = 'fondo' | 'etf' | 'acciones' | 'cripto' | 'trading' | 'pension' | 'deposito' | 'inmueble' | 'otro';
 
 export interface Inversion {
   id: string;
@@ -137,6 +137,28 @@ export interface Cobro {
   fecha: string; // desde cuándo
   devoluciones: Devolucion[];
   saldado: boolean;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+export type MercadoTrading = 'acciones' | 'forex' | 'cripto' | 'indices' | 'materias' | 'derivados' | 'otro';
+
+/** Operación de trading (diario de operaciones). */
+export interface Operacion {
+  id: string;
+  activo: string; // AAPL, BTC, EUR/USD…
+  mercado: MercadoTrading;
+  direccion: 'largo' | 'corto';
+  apertura: string; // yyyy-mm-dd
+  cierre?: string; // sin cierre = abierta
+  entrada?: number; // precio (número normal, no céntimos)
+  salida?: number;
+  cantidad?: number;
+  comisiones: number; // céntimos
+  resultadoManual?: number; // céntimos; si se usa, ignora los precios
+  inversionId?: string; // cuenta de trading
+  aplicadoEnCuenta?: number; // céntimos sumados al valor de la cuenta (para poder revertirlo)
+  estrategia?: string;
   creadoEn: string;
   actualizadoEn: string;
 }

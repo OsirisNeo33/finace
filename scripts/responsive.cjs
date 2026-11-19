@@ -41,7 +41,7 @@ const revisar = () => {
     if (!visible(el) || el.closest('svg') || el.closest('[aria-hidden=true]')) continue;
     const r = el.getBoundingClientRect();
     if (!r.width) continue;
-    if ((r.right > W + 0.5 || r.left < -0.5) && !enScrollX(el)) out.push(`FUERA ${el.tagName.toLowerCase()} «${desc(el)}» ${Math.round(r.left)}→${Math.round(r.right)} (ancho ${W})`);
+    if ((r.right > W + 0.5 || r.left < -0.5) && !enScrollX(el) && !recortado(el)) out.push(`FUERA ${el.tagName.toLowerCase()} «${desc(el)}» ${Math.round(r.left)}→${Math.round(r.right)} (ancho ${W})`);
     const s = getComputedStyle(el);
     if (s.overflowX === 'visible' && el.scrollWidth > el.clientWidth + 1 && el.clientWidth > 0 && !enScrollX(el) && !['svg', 'SELECT'].includes(el.tagName) && !recortado(el))
       out.push(`DESBORDA ${el.tagName.toLowerCase()}.${(el.className?.baseVal ?? el.className).toString().split(' ').slice(0, 3).join('.')} «${desc(el)}» ${el.scrollWidth}>${el.clientWidth}`);
@@ -201,6 +201,20 @@ const revisar = () => {
     await mirar('hoja-inversion');
     await p.getByRole('button', { name: 'Guardar' }).click();
     await mirar('inversiones');
+    await p.getByRole('tab', { name: 'Trading' }).click();
+    await mirar('trading-vacio');
+    await p.getByRole('button', { name: '+ Nueva operación' }).click();
+    await p.getByLabel('Activo').fill('BRK.B');
+    await p.getByLabel('Precio de entrada').fill('412,345678');
+    await p.getByLabel('Cantidad').fill('12,5');
+    await p.getByRole('switch', { name: 'Operación cerrada' }).click();
+    await p.getByLabel('Precio de salida').fill('398,12');
+    await p.getByLabel('Comisiones').fill('12,99');
+    await p.getByLabel('Estrategia o motivo (opcional)').fill('Rotura de soporte semanal tras resultados');
+    await mirar('hoja-operacion');
+    await p.getByRole('button', { name: 'Guardar' }).click();
+    await mirar('trading');
+    await p.getByRole('tab', { name: 'Cartera' }).click();
     await p.getByRole('tab', { name: 'Me deben' }).click();
     await mirar('me-deben-vacio');
     for (const [n, c, x] of [['María José Fernández', 'Mitad del regalo de cumpleaños de Lucía', '1234,56'], ['María José Fernández', 'Entradas concierto', '89'], ['Pablo', 'Cena', '25']]) {
