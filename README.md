@@ -54,7 +54,7 @@ npm run build      # compilación de producción en dist/
 npx vite preview --port 4173 & npm run e2e   # prueba completa en navegador
 ```
 
-Tecnología: React 19 + TypeScript + Vite, Tailwind CSS 4, Dexie (IndexedDB), Recharts, vite-plugin-pwa. Los importes se guardan en **céntimos enteros** para evitar errores de redondeo. La lógica de negocio está en `src/domain/` con tests.
+Tecnología: React 19 + TypeScript + Vite, Tailwind CSS 4, Dexie (IndexedDB), vite-plugin-pwa. El aspecto sigue el sistema de diseño de [`docs/DISENO.md`](docs/DISENO.md): los tokens están en `src/index.css` y los componentes base en `src/components/ui.tsx`. Los importes se guardan en **céntimos enteros** para evitar errores de redondeo. La lógica de negocio está en `src/domain/` con tests.
 
 ## Documentos
 

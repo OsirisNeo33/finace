@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
-import { CampoImporte } from '../../components/Selectores';
+import { Alerta, AmountField, Button, Card, Emoji, Field, FieldRow, Panel, Segmented, SelectField, Tile, TileButton, Toggle, cx } from '../../components/ui';
 import { aCentimos } from '../../domain/dinero';
 import { fechaCorta, fechasPendientes, hoyISO, siguienteFecha } from '../../domain/fechas';
 import type { Frecuencia, Recurrente } from '../../domain/tipos';
@@ -28,37 +28,37 @@ export function Recurrentes() {
 
   return (
     <>
-      <p className="texto-2 text-sm">Se apuntan solos en su fecha (al abrir la app) o, si eliges «Solo recordármelo», los marcas tú como pagados en la pestaña Pagos.</p>
       {mensual > 0 && (
-        <div className="tarjeta p-4">
-          <p className="texto-2 text-xs">Gastos fijos al mes (aprox.)</p>
-          <p className="importe text-2xl font-bold">{dinero(mensual)}</p>
-        </div>
+        <Card dark>
+          <p className="text-[13px] text-white/60">Gastos fijos al mes (aprox.)</p>
+          <p className="num mt-1 text-[34px] leading-tight font-semibold">{dinero(mensual)}</p>
+        </Card>
       )}
-      {recurrentes.length > 0 && (
-        <div className="tarjeta divide-y overflow-hidden">
-          {recurrentes.map((r) => {
-            const c = r.categoriaId ? categoriaPorId.get(r.categoriaId) : undefined;
-            return (
-              <button key={r.id} className="flex w-full items-center gap-3 px-4 py-3 text-left" style={{ borderColor: 'var(--borde)', opacity: r.activo ? 1 : 0.5 }} onClick={() => setEditando(r)}>
-                <span className="text-xl">{c?.icono ?? '🔁'}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">{r.nota || c?.nombre}</span>
-                  <span className="texto-2 text-xs">
-                    {FREC[r.frecuencia]} · {!r.activo ? 'Pausado' : r.automatico === false ? '🔔 Recordatorio' : `próximo ${fechaCorta(proxima(r))}`}
-                  </span>
-                </span>
-                <span className="importe font-semibold" style={{ color: r.tipo === 'ingreso' ? 'var(--color-ingreso)' : undefined }}>
-                  {r.tipo === 'ingreso' ? dinero(r.importe, { signo: true }) : dinero(-r.importe)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-      <button className="boton boton-primario" onClick={() => setEditando('nuevo')}>
+      <Panel title="Tus recurrentes" detail={recurrentes.length ? <span className="num">{recurrentes.length}</span> : undefined} footer="Se apuntan solos en su fecha (al abrir la app) o, si los dejas como recordatorio, los marcas tú como pagados en la pestaña Pagos.">
+        {recurrentes.length === 0 && (
+          <Tile>
+            <span className="text-[14px] text-muted">Aún no tienes ninguno. Añade tu nómina, el alquiler o tus suscripciones.</span>
+          </Tile>
+        )}
+        {recurrentes.map((r) => {
+          const c = r.categoriaId ? categoriaPorId.get(r.categoriaId) : undefined;
+          return (
+            <TileButton
+              key={r.id}
+              className={r.activo ? undefined : 'opacity-60'}
+              icon={<Emoji>{c?.icono ?? '🔁'}</Emoji>}
+              title={r.nota || c?.nombre}
+              subtitle={`${FREC[r.frecuencia]} · ${!r.activo ? 'Pausado' : r.automatico === false ? 'Recordatorio' : `próximo ${fechaCorta(proxima(r))}`}`}
+              detail={<span className={cx('num text-[15px] font-semibold', r.tipo === 'ingreso' ? 'text-success' : 'text-text')}>{r.tipo === 'ingreso' ? dinero(r.importe, { signo: true }) : dinero(-r.importe)}</span>}
+              chevron
+              onClick={() => setEditando(r)}
+            />
+          );
+        })}
+      </Panel>
+      <Button className="w-full" onClick={() => setEditando('nuevo')}>
         + Nuevo recurrente
-      </button>
+      </Button>
       {editando && <FormRecurrente r={editando === 'nuevo' ? undefined : editando} onCerrar={() => setEditando(null)} />}
     </>
   );
@@ -88,73 +88,72 @@ export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente;
 
   return (
     <Hoja titulo={r ? 'Editar recurrente' : 'Nuevo recurrente'} onCerrar={onCerrar}>
-      <div className="flex flex-col gap-3 px-5 pb-5">
-        <div className="flex gap-2">
-          {(['gasto', 'ingreso'] as const).map((t) => (
-            <button
-              key={t}
-              className="chip flex-1"
-              aria-pressed={tipo === t}
-              onClick={() => {
-                setTipo(t);
-                setCategoriaId('');
-              }}
-            >
-              {t === 'gasto' ? 'Gasto' : 'Ingreso'}
-            </button>
-          ))}
-        </div>
-        <input className="campo" placeholder="Nombre (ej. Alquiler, Netflix, Nómina)" value={nota} onChange={(e) => setNota(e.target.value)} />
-        <CampoImporte valor={valor} onCambio={setValor} placeholder="Importe" />
-        <select className="campo" value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
-          <option value="">Categoría…</option>
-          {cats.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.icono} {c.nombre}
-            </option>
-          ))}
-        </select>
-        {cuentas.length > 1 && (
-          <select className="campo" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
-            {cuentas.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.icono} {c.nombre}
-              </option>
-            ))}
-          </select>
-        )}
-        <div className="flex gap-2">
-          {(Object.keys(FREC) as Frecuencia[]).map((f) => (
-            <button key={f} className="chip flex-1" aria-pressed={frecuencia === f} onClick={() => setFrecuencia(f)}>
-              {FREC[f]}
-            </button>
-          ))}
-        </div>
-        <label className="text-sm">
-          <span className="texto-2">{frecuencia === 'mensual' ? 'Primer pago (se repite ese mismo día cada mes)' : 'Primer pago'}</span>
-          <input type="date" className="campo mt-1" value={inicio} onChange={(e) => e.target.value && setInicio(e.target.value)} disabled={!!r?.ultimaGeneracion} />
-        </label>
-        <div className="flex flex-col gap-2 text-sm">
-          <span className="texto-2">Cuando llegue el día…</span>
-          <button className="chip text-left" aria-pressed={automatico} onClick={() => setAutomatico(true)}>
-            ⚡ Apuntarlo solo como {tipo === 'gasto' ? 'gasto' : 'ingreso'}
-          </button>
-          <button className="chip text-left" aria-pressed={!automatico} onClick={() => setAutomatico(false)}>
-            🔔 Solo recordármelo (lo marco yo como pagado)
-          </button>
-        </div>
+      <div className="space-y-3 px-4 pb-5">
+        <Segmented
+          label="Tipo"
+          value={tipo}
+          onChange={(t) => {
+            setTipo(t);
+            setCategoriaId('');
+          }}
+          options={[
+            { value: 'gasto', label: 'Gasto' },
+            { value: 'ingreso', label: 'Ingreso' },
+          ]}
+        />
+        <Panel title="Datos">
+          <Field label="Nombre" placeholder="Ej. Alquiler, Netflix, Nómina" value={nota} onChange={(e) => setNota(e.target.value)} />
+          <FieldRow>
+            <AmountField label="Importe" value={valor} onChange={setValor} />
+            <SelectField label="Categoría" value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)}>
+              <option value="">Elige…</option>
+              {cats.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.icono} {c.nombre}
+                </option>
+              ))}
+            </SelectField>
+          </FieldRow>
+          {cuentas.length > 1 && (
+            <SelectField label="Cuenta" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
+              {cuentas.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.icono} {c.nombre}
+                </option>
+              ))}
+            </SelectField>
+          )}
+        </Panel>
+        <Panel title="Cuándo">
+          <Segmented label="Frecuencia" value={frecuencia} onChange={setFrecuencia} options={(Object.keys(FREC) as Frecuencia[]).map((f) => ({ value: f, label: FREC[f] }))} />
+          <Field
+            label="Primer pago"
+            hint={frecuencia === 'mensual' ? 'Se repite ese mismo día cada mes.' : undefined}
+            type="date"
+            value={inicio}
+            onChange={(e) => e.target.value && setInicio(e.target.value)}
+            disabled={!!r?.ultimaGeneracion}
+          />
+          <Tile>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-medium">Apuntarlo automáticamente</span>
+              <span className="block text-[13px] text-muted">{automatico ? `Se apunta solo como ${tipo === 'gasto' ? 'gasto' : 'ingreso'} el día que toca.` : 'Solo te lo recuerda: lo marcas tú como pagado.'}</span>
+            </span>
+            <Toggle checked={automatico} onChange={setAutomatico} label="Apuntarlo automáticamente" />
+          </Tile>
+        </Panel>
         {pendientes > 0 && (
-          <p className="text-xs" style={{ color: 'var(--color-marca)' }}>
+          <Alerta tone="brand">
             Se apuntarán ahora {pendientes} movimiento{pendientes > 1 ? 's' : ''} hasta hoy.
-          </p>
+          </Alerta>
         )}
-        <button className="boton boton-primario" disabled={aCentimos(valor) <= 0 || !cuentaId || !categoriaId} onClick={guardar}>
+        <Button className="w-full" disabled={aCentimos(valor) <= 0 || !cuentaId || !categoriaId} onClick={guardar}>
           Guardar
-        </button>
+        </Button>
         {r && (
-          <div className="flex gap-2">
-            <button
-              className="boton boton-secundario flex-1"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
               onClick={async () => {
                 // Al reactivar, no rellenar el hueco del periodo pausado
                 const cambios: Partial<Recurrente> = { activo: !r.activo };
@@ -167,10 +166,9 @@ export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente;
               }}
             >
               {r.activo ? 'Pausar' : 'Reanudar'}
-            </button>
-            <button
-              className="boton boton-secundario flex-1"
-              style={{ color: 'var(--color-gasto)' }}
+            </Button>
+            <Button
+              variant="danger"
               onClick={async () => {
                 if (!confirm('¿Eliminar este recurrente? Los movimientos ya apuntados se conservan.')) return;
                 await db.recurrentes.delete(r.id);
@@ -178,7 +176,7 @@ export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente;
               }}
             >
               Eliminar
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -1,7 +1,7 @@
 {
   "name": "finace",
   "version": "1.0.0",
-  "description": "App personal para controlar gastos e ingresos d\u00eda a d\u00eda.",
+  "description": "App personal para controlar gastos e ingresos día a día.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -32,8 +32,7 @@
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "recharts": "^3.10.1"
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.6.2",

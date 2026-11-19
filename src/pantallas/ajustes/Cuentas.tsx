@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
-import { CampoImporte, SelectorColor, SelectorIcono } from '../../components/Selectores';
+import { SelectorIcono } from '../../components/Selectores';
+import { AmountField, Button, Card, ChipButton, Emoji, Field, Panel, SelectField, TileButton, cx } from '../../components/ui';
 import { saldosCuentas } from '../../domain/calculos';
 import { aCentimos } from '../../domain/dinero';
 import { ENTIDADES, saldoInicialPara } from '../../domain/bancos';
@@ -25,37 +26,36 @@ export function Cuentas() {
 
   return (
     <>
-      <div className="tarjeta p-4">
-        <p className="texto-2 text-xs">Total en todas tus cuentas</p>
-        <p className="importe text-2xl font-bold" style={{ color: total < 0 ? 'var(--color-gasto)' : undefined }}>
-          {dinero(total)}
+      <Card dark>
+        <p className="text-[13px] text-white/60">Total en todas tus cuentas</p>
+        <p className="num mt-1 text-[34px] leading-tight font-semibold">{dinero(total)}</p>
+        <p className="mt-1 text-[13px] text-white/60">
+          {todasCuentas.filter((c) => !c.archivada).length} {todasCuentas.filter((c) => !c.archivada).length === 1 ? 'cuenta' : 'cuentas'}
         </p>
-      </div>
-      <div className="tarjeta divide-y overflow-hidden">
-        {todasCuentas.map((c) => (
-          <button key={c.id} className="flex w-full items-center gap-3 px-4 py-3 text-left" style={{ borderColor: 'var(--borde)', opacity: c.archivada ? 0.5 : 1 }} onClick={() => setEditando(c)}>
-            <span className="flex h-10 w-10 items-center justify-center rounded-full text-xl" style={{ background: c.color + '22' }}>
-              {c.icono}
-            </span>
-            <span className="flex-1">
-              <span className="block font-medium">{c.nombre}</span>
-              <span className="texto-2 text-xs">{c.archivada ? 'Archivada' : TIPOS_CUENTA.find((t) => t[0] === c.tipo)?.[1]}</span>
-            </span>
-            <span className="text-right">
-              <span className="importe block font-semibold" style={{ color: (saldos.get(c.id) ?? 0) < 0 ? 'var(--color-gasto)' : undefined }}>
-                {dinero(saldos.get(c.id) ?? 0)}
-              </span>
-              <span className="text-xs text-[var(--color-marca)]">Actualizar saldo</span>
-            </span>
-          </button>
-        ))}
-      </div>
-      <button className="boton boton-primario" onClick={() => setEditando('nueva')}>
+      </Card>
+      <Panel
+        title="Tus cuentas"
+        footer="Toca una cuenta para poner el saldo que ves hoy en tu banco. Para mover dinero entre cuentas (por ejemplo, de BBVA a Revolut o sacar del cajero), usa «Transferencia» al añadir un movimiento: no cuenta como gasto."
+      >
+        {todasCuentas.map((c) => {
+          const saldo = saldos.get(c.id) ?? 0;
+          return (
+            <TileButton
+              key={c.id}
+              className={c.archivada ? 'opacity-60' : undefined}
+              icon={<Emoji>{c.icono}</Emoji>}
+              title={c.nombre}
+              subtitle={c.archivada ? 'Archivada' : TIPOS_CUENTA.find((t) => t[0] === c.tipo)?.[1]}
+              detail={<span className={cx('num text-[15px] font-semibold', saldo < 0 ? 'text-danger' : 'text-text')}>{dinero(saldo)}</span>}
+              chevron
+              onClick={() => setEditando(c)}
+            />
+          );
+        })}
+      </Panel>
+      <Button className="w-full" onClick={() => setEditando('nueva')}>
         + Añadir banco o cuenta
-      </button>
-      <p className="texto-2 text-xs">
-        Toca una cuenta para poner el saldo que ves hoy en tu banco. Para mover dinero entre cuentas (por ejemplo, de BBVA a Revolut o sacar del cajero), usa «Transferencia» al añadir un movimiento: no cuenta como gasto.
-      </p>
+      </Button>
       {editando && <FormCuenta cuenta={editando === 'nueva' ? undefined : editando} onCerrar={() => setEditando(null)} />}
     </>
   );
@@ -69,7 +69,7 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
   const [icono, setIcono] = useState(cuenta?.icono ?? '🏦');
   const [color, setColor] = useState(cuenta?.color ?? '#2563eb');
   const [saldo, setSaldo] = useState(aTexto(saldoActual));
-  const [verPersonalizar, setVerPersonalizar] = useState(false);
+  const [verIcono, setVerIcono] = useState(false);
   const usada = cuenta && movimientos.some((m) => m.cuentaId === cuenta.id || m.cuentaDestinoId === cuenta.id);
   const deseado = aCentimos(saldo);
   const usados = new Set(todasCuentas.map((c) => c.nombre.toLowerCase()));
@@ -90,18 +90,18 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
     onCerrar();
   }
 
+  const libres = ENTIDADES.filter((e) => !usados.has(e.nombre.toLowerCase()));
+
   return (
     <Hoja titulo={cuenta ? cuenta.nombre : 'Añadir banco o cuenta'} onCerrar={onCerrar}>
-      <div className="flex flex-col gap-4 px-5 pb-5">
-        {!cuenta && (
-          <div>
-            <p className="texto-2 mb-2 text-sm">Elige tu banco</p>
-            <div className="flex flex-wrap gap-2">
-              {ENTIDADES.filter((e) => !usados.has(e.nombre.toLowerCase())).map((e) => (
-                <button
+      <div className="space-y-3 px-4 pb-5">
+        {!cuenta && libres.length > 0 && (
+          <Panel title="Elige tu banco">
+            <div className="flex flex-wrap gap-1.5 px-1 pb-1">
+              {libres.map((e) => (
+                <ChipButton
                   key={e.nombre}
-                  className="chip"
-                  aria-pressed={nombre === e.nombre}
+                  active={nombre === e.nombre}
                   onClick={() => {
                     setNombre(e.nombre);
                     setTipo(e.tipo);
@@ -110,69 +110,63 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
                   }}
                 >
                   {e.nombre}
-                </button>
+                </ChipButton>
               ))}
             </div>
-          </div>
+          </Panel>
         )}
-        <label className="text-sm">
-          <span className="texto-2">Nombre</span>
-          <input className="campo mt-1" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="O escribe otro: Hucha, Cuenta nómina…" maxLength={30} />
-        </label>
-        <label className="text-sm">
-          <span className="texto-2">{cuenta ? 'Saldo actual (el que ves hoy en tu banco)' : '¿Cuánto tienes ahora en esta cuenta?'}</span>
-          <div className="mt-1">
-            <CampoImporte valor={saldo} onCambio={setSaldo} autoFocus={!!cuenta} />
-          </div>
-          {tipo === 'tarjeta' && <span className="texto-2 mt-1 block text-xs">Si debes dinero en la tarjeta, ponlo en negativo (ej. -250).</span>}
-          {cuenta && deseado !== saldoActual && (
-            <span className="mt-1 block text-xs" style={{ color: 'var(--color-marca)' }}>
-              Antes: {dinero(saldoActual)} → ahora: {dinero(deseado)}. No cuenta como gasto ni ingreso.
-            </span>
-          )}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {TIPOS_CUENTA.map(([t, n, i]) => (
-            <button
-              key={t}
-              className="chip"
-              aria-pressed={tipo === t}
-              onClick={() => {
-                setTipo(t);
-                if (!ENTIDADES.some((e) => e.nombre === nombre)) setIcono(i);
-              }}
-            >
-              {i} {n}
-            </button>
-          ))}
-        </div>
-        <button className="texto-2 self-start text-sm underline" onClick={() => setVerPersonalizar((v) => !v)}>
-          {verPersonalizar ? 'Ocultar icono y color' : 'Cambiar icono y color'}
-        </button>
-        {verPersonalizar && (
-          <>
-            <SelectorIcono valor={icono} onCambio={setIcono} />
-            <SelectorColor valor={color} onCambio={setColor} />
-          </>
-        )}
-        <button className="boton boton-primario" onClick={guardar} disabled={!nombre.trim()}>
+        <Panel title="Datos">
+          <Field label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="O escribe otro: Hucha, Cuenta nómina…" maxLength={30} />
+          <AmountField
+            label={cuenta ? 'Saldo actual (el que ves hoy en tu banco)' : '¿Cuánto tienes ahora en esta cuenta?'}
+            value={saldo}
+            onChange={setSaldo}
+            autoFocus={!!cuenta}
+            hint={
+              cuenta && deseado !== saldoActual
+                ? `Antes: ${dinero(saldoActual)} → ahora: ${dinero(deseado)}. No cuenta como gasto ni ingreso.`
+                : tipo === 'tarjeta'
+                  ? 'Si debes dinero en la tarjeta, ponlo en negativo (ej. -250).'
+                  : undefined
+            }
+            hintTone={cuenta && deseado !== saldoActual ? 'brand' : undefined}
+          />
+          <SelectField
+            label="Tipo de cuenta"
+            value={tipo}
+            onChange={(e) => {
+              const t = e.target.value as TipoCuenta;
+              setTipo(t);
+              if (!ENTIDADES.some((x) => x.nombre === nombre)) setIcono(TIPOS_CUENTA.find((x) => x[0] === t)![2]);
+            }}
+          >
+            {TIPOS_CUENTA.map(([t, n, i]) => (
+              <option key={t} value={t}>
+                {i} {n}
+              </option>
+            ))}
+          </SelectField>
+          <TileButton icon={<Emoji>{icono}</Emoji>} title="Icono" detail={verIcono ? 'Ocultar' : 'Cambiar'} onClick={() => setVerIcono((v) => !v)} />
+          {verIcono && <SelectorIcono valor={icono} onCambio={setIcono} />}
+        </Panel>
+        <Button className="w-full" onClick={guardar} disabled={!nombre.trim()}>
           Guardar
-        </button>
+        </Button>
         {cuenta && (
-          <div className="flex gap-2">
-            <button
-              className="boton boton-secundario flex-1"
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="secondary"
+              className={usada ? 'col-span-2' : undefined}
               onClick={async () => {
                 await db.cuentas.update(cuenta.id, { archivada: !cuenta.archivada });
                 onCerrar();
               }}
             >
               {cuenta.archivada ? 'Desarchivar' : 'Archivar'}
-            </button>
+            </Button>
             {!usada && (
-              <button
-                className="boton boton-secundario flex-1"
-                style={{ color: 'var(--color-gasto)' }}
+              <Button
+                variant="danger"
                 onClick={async () => {
                   await db.cuentas.delete(cuenta.id);
                   avisar('Cuenta eliminada');
@@ -180,11 +174,11 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
                 }}
               >
                 Eliminar
-              </button>
+              </Button>
             )}
           </div>
         )}
-        {usada && <p className="texto-2 text-xs">Esta cuenta tiene movimientos: puedes archivarla para ocultarla, pero no eliminarla.</p>}
+        {usada && <p className="px-3 text-[13px] text-muted">Esta cuenta tiene movimientos: puedes archivarla para ocultarla, pero no eliminarla.</p>}
       </div>
     </Hoja>
   );

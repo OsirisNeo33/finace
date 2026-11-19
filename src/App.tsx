@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProveedorDatos, useDatos } from './contexto';
 import { Editor } from './components/Editor';
 import { Aviso } from './components/Aviso';
-import { IconoAjustes, IconoGrafico, IconoInicio, IconoLista, IconoMas } from './components/Iconos';
+import { IconoAjustes, IconoGrafico, IconoInicio, IconoLista, IconoMas, IconoCalendario } from './components/Iconos';
 import { Inicio } from './pantallas/Inicio';
 import { Movimientos, type Filtro } from './pantallas/Movimientos';
 import { Estadisticas } from './pantallas/Estadisticas';
@@ -11,7 +11,6 @@ import { Bienvenida } from './pantallas/Bienvenida';
 import { Pagos } from './pantallas/Pagos';
 import { Logros } from './pantallas/Logros';
 import { Celebracion } from './components/Celebracion';
-import { IconoCalendario } from './components/Iconos';
 import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
@@ -31,7 +30,7 @@ function usarTema(tema: 'sistema' | 'claro' | 'oscuro') {
     const aplicar = () => {
       const oscuro = tema === 'oscuro' || (tema === 'sistema' && mq.matches);
       document.documentElement.classList.toggle('dark', oscuro);
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', oscuro ? '#0b0f14' : '#f6f7f9');
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', oscuro ? '#0b0c0e' : '#eceef1');
     };
     aplicar();
     mq.addEventListener('change', aplicar);
@@ -61,7 +60,7 @@ function Contenido() {
     window.scrollTo(0, 0);
   }, [pestana]);
 
-  if (cargando) return <div className="flex min-h-dvh items-center justify-center texto-2">Cargando…</div>;
+  if (cargando) return <div className="flex min-h-dvh items-center justify-center text-muted">Cargando…</div>;
   if (!ajustes.configurado) return <Bienvenida />;
 
   const ir = (p: Pestana, f?: Filtro) => {
@@ -70,32 +69,51 @@ function Contenido() {
   };
   const props = { periodo, desplazamiento, setDesplazamiento, ir };
 
-  return (
-    <div className="mx-auto min-h-dvh max-w-2xl pb-28">
-      {pestana === 'inicio' && <Inicio {...props} />}
-      {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
-      {pestana === 'pagos' && <Pagos />}
-      {pestana === 'estadisticas' && <Estadisticas {...props} />}
-      {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} />}
-      {pestana === 'logros' && <Logros />}
+  const conBotonMas = pestana !== 'ajustes' && pestana !== 'logros';
 
-      <nav className="pb-seguro fixed inset-x-0 bottom-0 z-30 border-t backdrop-blur" style={{ borderColor: 'var(--borde)', background: 'color-mix(in srgb, var(--superficie) 88%, transparent)' }}>
-        <div className="mx-auto grid max-w-2xl grid-cols-6 items-center">
-          <BotonNav activo={pestana === 'inicio'} onClick={() => ir('inicio')} icono={<IconoInicio />} texto="Inicio" />
-          <BotonNav activo={pestana === 'movimientos'} onClick={() => ir('movimientos', {})} icono={<IconoLista />} texto="Movimientos" />
-          <BotonNav activo={pestana === 'pagos'} onClick={() => ir('pagos')} icono={<IconoCalendario />} texto="Pagos" />
-          <div className="flex justify-center">
-            <button
-              className="-mt-7 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-marca)] text-white shadow-lg shadow-teal-900/30 active:scale-95 dark:text-teal-950"
-              onClick={() => abrirEditor()}
-              aria-label="Añadir movimiento"
-            >
-              <IconoMas width={30} height={30} strokeWidth={2.5} />
-            </button>
-          </div>
-          <BotonNav activo={pestana === 'estadisticas'} onClick={() => ir('estadisticas')} icono={<IconoGrafico />} texto="Análisis" />
-          <BotonNav activo={pestana === 'ajustes'} onClick={() => ir('ajustes')} icono={<IconoAjustes />} texto="Ajustes" />
+  return (
+    <div className="min-h-dvh" style={{ paddingBottom: `calc(${conBotonMas ? '10.5rem' : '6.5rem'} + env(safe-area-inset-bottom))` }}>
+      <main>
+        {pestana === 'inicio' && <Inicio {...props} />}
+        {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
+        {pestana === 'pagos' && <Pagos />}
+        {pestana === 'estadisticas' && <Estadisticas {...props} />}
+        {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} />}
+        {pestana === 'logros' && <Logros onVolver={() => ir('inicio')} />}
+      </main>
+
+      {conBotonMas && (
+        <div className="pointer-events-none fixed inset-x-0 z-30 mx-auto flex max-w-md justify-end px-4" style={{ bottom: 'calc(5.75rem + max(0.75rem, env(safe-area-inset-bottom)))' }}>
+          <button
+            type="button"
+            className="pointer-events-auto flex size-14 items-center justify-center rounded-full bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)] transition active:scale-95"
+            onClick={() => abrirEditor()}
+            aria-label="Añadir movimiento"
+          >
+            <IconoMas width={28} height={28} />
+          </button>
         </div>
+      )}
+
+      <nav aria-label="Secciones" className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <ul className="mx-auto flex max-w-md gap-1 rounded-[26px] border border-border bg-surface/90 p-1.5 shadow-[0_10px_30px_-12px_rgba(16,24,40,0.25)] backdrop-blur-xl">
+          {PESTANAS.map(({ id, texto, Icono }) => {
+            const activo = pestana === id || (id === 'inicio' && pestana === 'logros');
+            return (
+              <li key={id} className="flex-1">
+                <button
+                  type="button"
+                  onClick={() => ir(id, id === 'movimientos' ? {} : undefined)}
+                  aria-current={activo ? 'page' : undefined}
+                  className={`flex min-h-13 w-full flex-col items-center justify-center gap-0.5 rounded-[20px] text-[10.5px] font-medium transition ${activo ? 'bg-brand-soft text-brand' : 'text-muted'}`}
+                >
+                  <Icono width={22} height={22} strokeWidth={activo ? 2.1 : 1.8} />
+                  {texto}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
       {editor.abierto && <Editor />}
@@ -105,11 +123,10 @@ function Contenido() {
   );
 }
 
-function BotonNav({ activo, onClick, icono, texto }: { activo: boolean; onClick: () => void; icono: React.ReactNode; texto: string }) {
-  return (
-    <button className="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium" style={{ color: activo ? 'var(--color-marca)' : 'var(--texto-2)' }} onClick={onClick} aria-current={activo ? 'page' : undefined}>
-      {icono}
-      {texto}
-    </button>
-  );
-}
+const PESTANAS = [
+  { id: 'inicio', texto: 'Inicio', Icono: IconoInicio },
+  { id: 'movimientos', texto: 'Movimientos', Icono: IconoLista },
+  { id: 'pagos', texto: 'Pagos', Icono: IconoCalendario },
+  { id: 'estadisticas', texto: 'Análisis', Icono: IconoGrafico },
+  { id: 'ajustes', texto: 'Ajustes', Icono: IconoAjustes },
+] as const;

@@ -7,12 +7,14 @@ import { aISO, fechaLarga, hoyISO, periodoDe } from '../domain/fechas';
 import { db } from '../db/db';
 import { marcarPagado, usarPagos, type Pago } from './usarPagos';
 import type { Recurrente } from '../domain/tipos';
+import { IconoCheck, IconoMas } from '../components/Iconos';
+import { Button, Card, CardTitle, Chip, Emoji, HeaderButton, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, cx, type TonoChip } from '../components/ui';
 
-const ESTILO: Record<Pago['estado'], { texto: string; color: string }> = {
-  pagado: { texto: 'Pagado', color: 'var(--color-ingreso)' },
-  hoy: { texto: 'Hoy', color: '#d97706' },
-  pendiente: { texto: 'Pendiente', color: 'var(--texto-2)' },
-  vencido: { texto: 'Sin pagar', color: 'var(--color-gasto)' },
+const ESTADO: Record<Pago['estado'], { texto: string; tono: TonoChip }> = {
+  pagado: { texto: 'Pagado', tono: 'success' },
+  hoy: { texto: 'Hoy', tono: 'warning' },
+  pendiente: { texto: 'Pendiente', tono: 'neutral' },
+  vencido: { texto: 'Sin pagar', tono: 'danger' },
 };
 
 export function Pagos() {
@@ -38,101 +40,115 @@ export function Pagos() {
   const visibles = diaSel ? porDia.get(diaSel) ?? [] : pagos;
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-4">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">Pagos</h1>
-        <p className="texto-2 text-sm">Suscripciones, recibos y pagos que se repiten.</p>
-      </header>
-      <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={(n) => { setDesplazamiento(n); setDiaSel(undefined); }} diaInicio={1} permitirFuturo />
+    <>
+      <PageHeader
+        title="Pagos"
+        subtitle="Suscripciones, recibos y pagos que se repiten"
+        action={
+          <HeaderButton label="Añadir pago" onClick={() => setForm({ inicio: diaSel })}>
+            <IconoMas width={22} height={22} />
+          </HeaderButton>
+        }
+      />
+      <Page>
+        <SelectorPeriodo
+          periodo={periodo}
+          desplazamiento={desplazamiento}
+          setDesplazamiento={(n) => {
+            setDesplazamiento(n);
+            setDiaSel(undefined);
+          }}
+          diaInicio={1}
+          permitirFuturo
+        />
 
-      <section className="tarjeta p-4">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="texto-2 text-xs">Pagos fijos este mes</p>
-            <p className="importe text-3xl font-bold" data-testid="total-pagos">{dinero(total)}</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Card dark className="p-4">
+            <p className="text-[13px] text-white/60">Pagos fijos este mes</p>
+            <p className="num mt-1 text-[22px] font-semibold" data-testid="total-pagos">
+              {dinero(total)}
+            </p>
+            {total > 0 && <p className="num mt-1 text-[12px] text-white/60">Falta {dinero(total - pagado)}</p>}
+          </Card>
+          <Card className="p-4">
+            <Label>{ingresos > 0 ? 'Ingresos fijos' : 'Ya pagado'}</Label>
+            <p className="num mt-1 text-[22px] font-semibold">{ingresos > 0 ? dinero(ingresos, { signo: true }) : dinero(pagado)}</p>
+            {total > 0 && (
+              <div className="mt-2.5">
+                <ProgressBar value={pagado / total} tone="success" />
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* Calendario */}
+        <Card className="p-4">
+          <CardTitle detail={diaSel ? <PanelLink onClick={() => setDiaSel(undefined)}>Ver todo el mes</PanelLink> : 'Toca un día'}>
+            <span className="first-letter:uppercase">{periodo.etiqueta}</span>
+          </CardTitle>
+          <div className="mb-1 grid grid-cols-7 text-center text-[11px] text-muted">
+            {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d) => (
+              <span key={d}>{d}</span>
+            ))}
           </div>
-          {ingresos > 0 && (
-            <div className="text-right">
-              <p className="texto-2 text-xs">Ingresos fijos</p>
-              <p className="importe font-semibold" style={{ color: 'var(--color-ingreso)' }}>{dinero(ingresos, { signo: true })}</p>
-            </div>
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: getISODay(parseISO(dias[0])) - 1 }, (_, i) => (
+              <span key={'v' + i} />
+            ))}
+            {dias.map((d) => {
+              const ps = porDia.get(d) ?? [];
+              const vencido = ps.some((p) => p.estado === 'vencido');
+              const todoPagado = ps.length > 0 && ps.every((p) => p.estado === 'pagado');
+              const elegido = d === diaSel;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={cx(
+                    'flex min-h-14 flex-col items-center gap-0.5 rounded-2xl pt-1.5 transition active:scale-95',
+                    elegido ? 'bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)]' : ps.length ? (vencido ? 'bg-danger-soft' : todoPagado ? 'bg-success-soft' : 'bg-brand-soft') : 'bg-surface-2',
+                    d === hoy && !elegido && 'ring-1 ring-brand',
+                  )}
+                  onClick={() => setDiaSel(elegido ? undefined : d)}
+                  aria-label={`${fechaLarga(d)}: ${ps.length} pagos`}
+                  aria-pressed={elegido}
+                >
+                  <span className={cx('num text-[14px]', d === hoy ? 'font-bold' : 'font-medium')}>{parseISO(d).getDate()}</span>
+                  <span className="flex flex-wrap justify-center text-[13px] leading-none">
+                    {ps.slice(0, 2).map((p) => (
+                      <span key={p.clave}>{(p.recurrente.categoriaId && categoriaPorId.get(p.recurrente.categoriaId)?.icono) || '🔁'}</span>
+                    ))}
+                    {ps.length > 2 && <span className={cx('text-[10px]', elegido ? 'text-on-brand/80' : 'text-muted')}>+{ps.length - 2}</span>}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <Chip tone="success">Pagado</Chip>
+            <Chip tone="brand">Pendiente</Chip>
+            <Chip tone="danger">Sin pagar</Chip>
+          </div>
+        </Card>
+
+        {/* Lista */}
+        <Panel title={diaSel ? <span className="first-letter:uppercase">{fechaLarga(diaSel)}</span> : 'Este mes'} detail={visibles.length ? `${visibles.length}` : undefined}>
+          {visibles.length === 0 && (
+            <Tile>
+              <span className="text-[14px] text-muted">{diaSel ? 'Ningún pago este día.' : 'Aún no tienes pagos fijos. Añade tus suscripciones (Netflix, Spotify, gimnasio…) y recibos (alquiler, luz, móvil…).'}</span>
+            </Tile>
           )}
-        </div>
-        {total > 0 && (
-          <>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full" style={{ background: 'var(--superficie-2)' }}>
-              <div className="h-full rounded-full" style={{ width: `${(pagado / total) * 100}%`, background: 'var(--color-ingreso)' }} />
-            </div>
-            <div className="mt-1.5 flex justify-between text-xs">
-              <span style={{ color: 'var(--color-ingreso)' }}>Pagado {dinero(pagado)}</span>
-              <span className="texto-2">Falta {dinero(total - pagado)}</span>
-            </div>
-          </>
-        )}
-      </section>
+          {visibles.map((p) => (
+            <FilaPago key={p.clave} p={p} onEditar={() => setForm({ r: p.recurrente })} />
+          ))}
+        </Panel>
+        <Button className="w-full" onClick={() => setForm({ inicio: diaSel })}>
+          + {diaSel ? `Añadir pago el día ${parseISO(diaSel).getDate()}` : 'Añadir suscripción o pago'}
+        </Button>
 
-      {/* Calendario */}
-      <section className="tarjeta p-3">
-        <div className="texto-2 mb-1 grid grid-cols-7 text-center text-xs">
-          {['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d) => <span key={d}>{d}</span>)}
-        </div>
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: getISODay(parseISO(dias[0])) - 1 }, (_, i) => <span key={'v' + i} />)}
-          {dias.map((d) => {
-            const ps = porDia.get(d) ?? [];
-            const vencido = ps.some((p) => p.estado === 'vencido');
-            const todoPagado = ps.length > 0 && ps.every((p) => p.estado === 'pagado');
-            return (
-              <button
-                key={d}
-                className="flex min-h-14 flex-col items-center gap-0.5 rounded-lg pt-1 text-xs"
-                style={{
-                  background: ps.length ? (vencido ? 'color-mix(in srgb, var(--color-gasto) 16%, transparent)' : todoPagado ? 'color-mix(in srgb, var(--color-ingreso) 14%, transparent)' : 'var(--color-marca-suave)') : 'var(--superficie-2)',
-                  outline: d === diaSel ? '2px solid var(--color-marca)' : d === hoy ? '1px solid var(--texto-2)' : undefined,
-                }}
-                onClick={() => setDiaSel(diaSel === d ? undefined : d)}
-                aria-label={`${fechaLarga(d)}: ${ps.length} pagos`}
-              >
-                <span className={d === hoy ? 'font-bold' : 'font-medium'}>{parseISO(d).getDate()}</span>
-                <span className="flex flex-wrap justify-center text-[13px] leading-none">
-                  {ps.slice(0, 2).map((p) => (
-                    <span key={p.clave}>{(p.recurrente.categoriaId && categoriaPorId.get(p.recurrente.categoriaId)?.icono) || '🔁'}</span>
-                  ))}
-                  {ps.length > 2 && <span className="texto-2 text-[10px]">+{ps.length - 2}</span>}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-        <div className="texto-2 mt-2 flex flex-wrap gap-x-3 gap-y-1 px-1 text-[11px]">
-          <span>🟢 pagado</span>
-          <span>🟦 pendiente</span>
-          <span>🔴 sin pagar</span>
-          <span>Toca un día para ver o añadir</span>
-        </div>
-      </section>
-
-      {/* Lista */}
-      <section className="tarjeta overflow-hidden">
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
-          <h2 className="font-semibold">{diaSel ? fechaLarga(diaSel) : 'Este mes'}</h2>
-          {diaSel && (
-            <button className="text-sm text-[var(--color-marca)]" onClick={() => setDiaSel(undefined)}>
-              Ver todo el mes
-            </button>
-          )}
-        </div>
-        {visibles.length === 0 && <p className="texto-2 px-4 py-4 text-sm">{diaSel ? 'Ningún pago este día.' : 'Aún no tienes pagos fijos. Añade tus suscripciones (Netflix, Spotify, gimnasio…) y recibos (alquiler, luz, móvil…).'}</p>}
-        {visibles.map((p) => <FilaPago key={p.clave} p={p} onEditar={() => setForm({ r: p.recurrente })} />)}
-        <div className="p-3">
-          <button className="boton boton-primario w-full" onClick={() => setForm({ inicio: diaSel })}>
-            + {diaSel ? `Añadir pago el día ${parseISO(diaSel).getDate()}` : 'Añadir suscripción o pago'}
-          </button>
-        </div>
-      </section>
-
-      {form && <FormRecurrente r={form.r} inicioInicial={form.inicio} onCerrar={() => setForm(null)} />}
-    </div>
+        {form && <FormRecurrente r={form.r} inicioInicial={form.inicio} onCerrar={() => setForm(null)} />}
+      </Page>
+    </>
   );
 }
 
@@ -140,37 +156,35 @@ export function FilaPago({ p, onEditar, mostrarFecha }: { p: Pago; onEditar?: ()
   const { categoriaPorId, dinero, avisar } = useDatos();
   const r = p.recurrente;
   const c = r.categoriaId ? categoriaPorId.get(r.categoriaId) : undefined;
-  const e = ESTILO[p.estado];
+  const e = ESTADO[p.estado];
   const manual = r.automatico === false;
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5">
-      <button className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={onEditar}>
-        <span className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-full text-lg leading-none" style={{ background: (c?.color ?? '#64748b') + '22' }}>
-          {c?.icono ?? '🔁'}
-        </span>
+    <div className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3">
+      <button type="button" className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left" onClick={onEditar}>
+        <Emoji>{c?.icono ?? '🔁'}</Emoji>
         <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{r.nota || c?.nombre}</span>
-          <span className="block truncate text-xs" style={{ color: e.color }}>
-            {mostrarFecha ? `${fechaLarga(p.fecha)} · ` : `Día ${parseISO(p.fecha).getDate()} · `}
-            {e.texto}
-            {manual ? ' · 🔔' : ''}
+          <span className="block truncate text-[15px] font-medium">{r.nota || c?.nombre}</span>
+          <span className="block truncate text-[13px] text-muted">
+            {mostrarFecha ? <span className="first-letter:uppercase">{fechaLarga(p.fecha)}</span> : `Día ${parseISO(p.fecha).getDate()}`}
+            {manual ? (p.estado !== 'pagado' ? ` · ${e.texto} · Recordatorio` : ' · Recordatorio') : ' · Automático'}
           </span>
         </span>
       </button>
-      <span className="text-right">
-        <span className="importe block font-semibold" style={{ color: r.tipo === 'ingreso' ? 'var(--color-ingreso)' : undefined }}>
-          {r.tipo === 'ingreso' ? dinero(r.importe, { signo: true }) : dinero(-r.importe)}
-        </span>
-        {manual && p.estado !== 'pagado' && (
+      <span className="flex shrink-0 flex-col items-end gap-1">
+        <span className={cx('num text-[15px] font-semibold', r.tipo === 'ingreso' && 'text-success')}>{r.tipo === 'ingreso' ? dinero(r.importe, { signo: true }) : dinero(-r.importe)}</span>
+        {manual && p.estado !== 'pagado' ? (
           <button
-            className="text-xs font-semibold text-[var(--color-marca)]"
+            type="button"
+            className="-my-1 inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-soft px-3 text-[12px] font-semibold text-brand active:scale-95"
             onClick={async () => {
               const id = await marcarPagado(p);
               avisar(`${r.nota || c?.nombre} marcado como pagado`, { etiqueta: 'Deshacer', hacer: () => db.movimientos.delete(id) });
             }}
           >
-            ✓ Marcar pagado
+            <IconoCheck width={14} height={14} /> Marcar pagado
           </button>
+        ) : (
+          <Chip tone={e.tono}>{e.texto}</Chip>
         )}
       </span>
     </div>

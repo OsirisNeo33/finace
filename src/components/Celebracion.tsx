@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useDatos } from '../contexto';
 import { usarJuego } from '../pantallas/usarJuego';
 import { guardarAjustes } from '../db/acciones';
+import { Button, Chip } from './ui';
 
 interface Premio {
   icono: string;
@@ -44,27 +45,27 @@ export function Celebracion({ onVerLogros }: { onVerLogros: () => void }) {
     <div className="fixed inset-0 z-[60] flex items-center justify-center px-6" role="dialog" aria-modal="true" aria-label="Logro desbloqueado">
       <div className="anim-aparecer absolute inset-0 bg-black/50" onClick={cerrar} />
       <Confeti />
-      <div className="anim-premio relative w-full max-w-xs rounded-3xl p-6 text-center shadow-2xl" style={{ background: 'var(--superficie)' }}>
-        <p className="text-xs font-semibold tracking-widest text-[var(--color-marca)] uppercase">{nuevos.length ? 'Insignia desbloqueada' : 'Subes de nivel'}</p>
-        <div className="anim-latido mx-auto my-4 flex h-24 w-24 items-center justify-center rounded-full text-6xl" style={{ background: 'var(--color-marca-suave)' }}>
-          {premio.icono}
-        </div>
-        <h2 className="text-xl font-bold">{premio.titulo}</h2>
-        <p className="texto-2 mt-1 text-sm">{premio.texto}</p>
-        {premio.xp !== undefined && <p className="mt-3 text-lg font-bold text-[var(--color-ingreso)]">+{premio.xp} XP</p>}
+      <div className="anim-premio relative w-full max-w-xs rounded-[26px] border border-border bg-surface p-6 text-center shadow-[0_10px_30px_-12px_rgba(16,24,40,0.25)]">
+        <Chip tone="brand">{nuevos.length ? 'Insignia desbloqueada' : 'Subes de nivel'}</Chip>
+        <div className="mx-auto my-4 flex size-24 items-center justify-center rounded-full border border-border bg-brand-soft text-[52px] leading-none">{premio.icono}</div>
+        <h2 className="text-[20px] font-semibold tracking-tight">{premio.titulo}</h2>
+        <p className="mt-1 text-[14px] text-muted">{premio.texto}</p>
+        {premio.xp !== undefined && (
+          <Chip tone="success" className="num mt-3 text-[14px]">
+            +{premio.xp} XP
+          </Chip>
+        )}
         <div className="mt-5 flex flex-col gap-2">
-          <button className="boton boton-primario" onClick={cerrar}>
-            ¡Genial!
-          </button>
-          <button
-            className="texto-2 text-sm"
+          <Button onClick={cerrar}>¡Genial!</Button>
+          <Button
+            variant="secondary"
             onClick={async () => {
               await cerrar();
               onVerLogros();
             }}
           >
             Ver mis logros
-          </button>
+          </Button>
         </div>
       </div>
     </div>
