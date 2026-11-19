@@ -1,5 +1,6 @@
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { IconoAtras, IconoSiguiente } from './Iconos';
+import { useNumeroAnimado } from './animacion';
 
 export function cx(...clases: (string | false | null | undefined)[]) {
   return clases.filter(Boolean).join(' ');
@@ -24,8 +25,8 @@ export function PageHeader({ title, subtitle, back, action }: { title: ReactNode
         {action}
       </div>
       <div className="mx-auto max-w-2xl px-5 pb-3">
-        <h1 className="text-[28px] leading-tight font-semibold tracking-tight">{title}</h1>
-        {subtitle && <p className="mt-0.5 text-[14px] text-muted">{subtitle}</p>}
+        <h1 className="anim-titulo text-[28px] leading-tight font-semibold tracking-tight">{title}</h1>
+        {subtitle && <p className="anim-titulo mt-0.5 text-[14px] text-muted [animation-delay:60ms]">{subtitle}</p>}
       </div>
     </header>
   );
@@ -67,7 +68,7 @@ export function Panel({ title, detail, footer, children, className, ...props }: 
           {detail && <span className="text-[13px] text-muted">{detail}</span>}
         </div>
       )}
-      <div className="space-y-1.5">{children}</div>
+      <div className="filas space-y-1.5">{children}</div>
       {footer && <p className="px-3 pt-2.5 pb-1.5 text-[13px] leading-snug text-muted">{footer}</p>}
     </section>
   );
@@ -194,7 +195,12 @@ export function HeaderButton({ label, children, onClick }: { label: string; chil
 /** Control segmentado (Gastos / Ingresos…). */
 export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode }[]; onChange: (value: T) => void; label?: string }) {
   return (
-    <div role="tablist" aria-label={label} className="flex rounded-2xl border border-border bg-surface-2 p-1">
+    <div role="tablist" aria-label={label} className="relative flex rounded-2xl border border-border bg-surface-2 p-1">
+      <span
+        aria-hidden="true"
+        className="deslizador absolute top-1 bottom-1 left-1 rounded-xl bg-surface shadow-sm"
+        style={{ width: `calc((100% - 0.5rem) / ${options.length})`, transform: `translateX(${Math.max(0, options.findIndex((o) => o.value === value)) * 100}%)` }}
+      />
       {options.map((o) => (
         <button
           key={o.value}
@@ -202,7 +208,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           type="button"
           aria-selected={o.value === value}
           onClick={() => onChange(o.value)}
-          className={cx('min-h-10 min-w-0 flex-1 rounded-xl px-1 text-[14px] leading-tight font-medium transition', o.value === value ? 'bg-surface text-text shadow-sm' : 'text-muted')}
+          className={cx('relative min-h-10 min-w-0 flex-1 rounded-xl px-1 text-[14px] leading-tight font-medium transition-colors duration-300', o.value === value ? 'text-text' : 'text-muted')}
         >
           {o.label}
         </button>
@@ -213,8 +219,8 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={cx("relative h-8 w-[52px] shrink-0 rounded-full transition before:absolute before:-inset-1.5 before:content-['']", checked ? 'bg-brand' : 'bg-border')}>
-      <span className={cx('absolute top-1 size-6 rounded-full bg-white shadow transition-all', checked ? 'left-[24px]' : 'left-1')} />
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={cx("relative h-8 w-[52px] shrink-0 rounded-full transition-colors duration-300 before:absolute before:-inset-1.5 before:content-['']", checked ? 'bg-brand' : 'bg-border')}>
+      <span className={cx('muelle absolute top-1 size-6 rounded-full bg-white shadow', checked ? 'left-[24px]' : 'left-1')} />
     </button>
   );
 }
@@ -225,7 +231,7 @@ export function ProgressBar({ value, tone = 'brand' }: { value: number; tone?: T
   const pct = Math.max(0, Math.min(1, value)) * 100;
   return (
     <div className="h-1.5 w-full overflow-hidden rounded-full bg-border">
-      <div className={cx('h-full rounded-full transition-all', tone === 'brand' && 'bg-brand', tone === 'success' && 'bg-success', tone === 'danger' && 'bg-danger', tone === 'warning' && 'bg-accent')} style={{ width: `${pct}%` }} />
+      <div className={cx('anim-barra h-full rounded-full transition-[width,background-color] duration-700 ease-out', tone === 'brand' && 'bg-brand', tone === 'success' && 'bg-success', tone === 'danger' && 'bg-danger', tone === 'warning' && 'bg-accent')} style={{ width: `${pct}%` }} />
     </div>
   );
 }
@@ -255,15 +261,21 @@ export function Chip({ tone = 'neutral', className, ...props }: ComponentProps<'
  */
 export function Cifra({ children, max = 22, className, ...props }: Omit<ComponentProps<'p'>, 'children'> & { children: string | number; max?: number }) {
   const texto = String(children);
+  const mostrado = useNumeroAnimado(texto);
   // Ancho de un carácter monoespaciado ≈ 0,6 em (+ margen); el número de caracteres fija el tamaño que cabe.
   const ajuste = 100 / (Math.max(texto.length, 3) * 0.63);
   return (
     <div className="@container w-full min-w-0">
       <p {...props} className={cx('num leading-tight font-semibold whitespace-nowrap', className)} style={{ fontSize: `min(${max}px, ${ajuste.toFixed(2)}cqi)` }}>
-        {texto}
+        {mostrado}
       </p>
     </div>
   );
+}
+
+/** Número que cuenta hasta su valor (para cifras sueltas que no usan `Cifra`). */
+export function Numero({ texto }: { texto: string }) {
+  return <>{useNumeroAnimado(texto)}</>;
 }
 
 /** Chip pulsable para filtros y opciones rápidas (activo = azul suave). */
@@ -355,7 +367,7 @@ export function SearchField(props: ComponentProps<'input'>) {
 export function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children?: ReactNode }) {
   return (
     <Card className="flex flex-col items-center px-6 py-9 text-center">
-      <span className="mb-3 flex size-14 items-center justify-center rounded-full border border-border bg-surface-2 text-[26px] text-brand">{icon}</span>
+      <span className="anim-premio mb-3 flex size-14 items-center justify-center rounded-full border border-border bg-surface-2 text-[26px] text-brand">{icon}</span>
       <p className="text-[16px] font-semibold">{title}</p>
       {children && <div className="mt-1 text-[14px] text-muted">{children}</div>}
     </Card>
@@ -374,8 +386,8 @@ export function BrandHero({ name, children }: { name: string; children?: ReactNo
         </div>
       </div>
       <svg viewBox="0 0 400 90" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 h-20 w-full" aria-hidden="true">
-        <path d="M0 38 C 70 18, 120 52, 200 36 S 330 14, 400 30 L400 90 L0 90 Z" className="fill-brand/25" />
-        <path d="M0 54 C 80 34, 150 70, 230 50 S 340 34, 400 46 L400 90 L0 90 Z" className="fill-brand" />
+        <path d="M0 38 C 70 18, 120 52, 200 36 S 330 14, 400 30 L400 90 L0 90 Z" className="ola-lenta fill-brand/25" />
+        <path d="M0 54 C 80 34, 150 70, 230 50 S 340 34, 400 46 L400 90 L0 90 Z" className="ola fill-brand" />
         <circle cx="300" cy="40" r="5" className="fill-surface stroke-brand" strokeWidth="2.5" />
       </svg>
     </div>
@@ -395,5 +407,5 @@ function WaveMark() {
 
 /** Bloque de errores o avisos. */
 export function Alerta({ tone = 'danger', children }: { tone?: 'danger' | 'warning' | 'brand'; children: ReactNode }) {
-  return <div className={cx('rounded-[18px] px-3.5 py-3 text-[14px]', tone === 'danger' && 'bg-danger-soft text-danger', tone === 'warning' && 'bg-warning-soft text-warning', tone === 'brand' && 'bg-brand-soft text-brand')}>{children}</div>;
+  return <div className={cx('anim-alerta rounded-[18px] px-3.5 py-3 text-[14px]', tone === 'danger' && 'bg-danger-soft text-danger', tone === 'warning' && 'bg-warning-soft text-warning', tone === 'brand' && 'bg-brand-soft text-brand')}>{children}</div>;
 }

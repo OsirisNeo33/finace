@@ -182,7 +182,7 @@ export function Editor() {
           <Label>{tipo === 'gasto' ? 'Gasto' : tipo === 'ingreso' ? 'Ingreso' : 'Transferencia'}</Label>
           <div className="@container">
             <div className={cx('num leading-tight font-semibold whitespace-nowrap', texto ? colorImporte : 'text-muted')} style={{ fontSize: `min(40px, ${(100 / (Math.max(textoImporte.length + 2, 4) * 0.63)).toFixed(2)}cqi)` }} data-testid="importe">
-              {textoImporte}{' '}
+              <span key={textoImporte} className="anim-tecla inline-block">{textoImporte}</span>{' '}
               <span style={{ fontSize: '0.65em' }}>{simbolo}</span>
             </div>
           </div>

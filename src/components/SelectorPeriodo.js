@@ -1,7 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { fechaCorta } from '../domain/fechas';
-import { IconoAtras, IconoSiguiente } from './Iconos';
-const redondo = 'flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-brand shadow-sm active:scale-95 disabled:opacity-40';
-export function SelectorPeriodo({ periodo, desplazamiento, setDesplazamiento, diaInicio, permitirFuturo }) {
-    return (_jsxs("div", { className: "flex items-center justify-between gap-3", children: [_jsx("button", { type: "button", className: redondo, onClick: () => setDesplazamiento(desplazamiento - 1), "aria-label": "Mes anterior", children: _jsx(IconoAtras, { width: 20, height: 20 }) }), _jsxs("button", { type: "button", className: "min-h-11 min-w-0 flex-1 text-center", onClick: () => setDesplazamiento(0), title: "Volver al mes actual", children: [_jsx("span", { className: "block text-[15px] font-semibold first-letter:uppercase", children: periodo.etiqueta }), (diaInicio !== 1 || desplazamiento !== 0) && (_jsx("span", { className: "block text-[12px] text-muted", children: diaInicio !== 1 ? (_jsxs("span", { className: "num", children: [fechaCorta(periodo.inicio), " \u2013 ", fechaCorta(periodo.fin)] })) : ('Toca para volver a este mes') }))] }), _jsx("button", { type: "button", className: redondo, onClick: () => setDesplazamiento(desplazamiento + 1), disabled: !permitirFuturo && desplazamiento >= 0, "aria-label": "Mes siguiente", children: _jsx(IconoSiguiente, { width: 20, height: 20 }) })] }));
-}
