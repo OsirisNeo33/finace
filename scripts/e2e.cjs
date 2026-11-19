@@ -7,7 +7,7 @@ const capturas = process.argv[2];
 
 (async () => {
   const navegador = await chromium.launch();
-  const ctx = await navegador.newContext({ ...devices['Pixel 7'], deviceScaleFactor: 1, locale: 'es-ES', acceptDownloads: true });
+  const ctx = await navegador.newContext({ ...devices['Pixel 7'], deviceScaleFactor: 1, locale: 'es-ES', acceptDownloads: true, reducedMotion: 'reduce' });
   const p = await ctx.newPage();
   const errores = (globalThis.__errores = []);
   p.on('pageerror', (e) => errores.push(e.message));

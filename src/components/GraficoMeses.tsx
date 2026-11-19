@@ -46,7 +46,7 @@ export function GraficoMeses({ datos, formatear }: { datos: PuntoMes[]; formatea
       <div className="relative">
         {sel && (
           <div
-            className="pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-surface-dark px-3 py-2 text-[12px] whitespace-nowrap text-white shadow-lg"
+            key={activo} className="anim-pop pointer-events-none absolute -top-2 z-10 -translate-x-1/2 -translate-y-full rounded-xl bg-surface-dark px-3 py-2 text-[12px] whitespace-nowrap text-white shadow-lg"
             style={{ left: `clamp(76px, ${(activo! + 0.5) * anchoGrupo}%, calc(100% - 76px))` }}
             role="status"
           >
@@ -71,9 +71,9 @@ export function GraficoMeses({ datos, formatear }: { datos: PuntoMes[]; formatea
             const hg = (d.gastos / max) * (H - 4);
             const atenuado = activo !== null && activo !== i;
             return (
-              <g key={d.clave} opacity={activo === i ? 1 : atenuado ? 0.45 : d.actual ? 1 : 0.55}>
-                <rect x={c - anchoBarra - 0.4} y={H - hi} width={anchoBarra} height={Math.max(hi, d.ingresos ? 1 : 0)} rx="1.2" className="fill-chart-income" />
-                <rect x={c + 0.4} y={H - hg} width={anchoBarra} height={Math.max(hg, d.gastos ? 1 : 0)} rx="1.2" className="fill-chart-expense" />
+              <g key={d.clave} className="transition-opacity duration-300" opacity={activo === i ? 1 : atenuado ? 0.45 : d.actual ? 1 : 0.55}>
+                <rect style={{ animationDelay: `${i * 45}ms` }} x={c - anchoBarra - 0.4} y={H - hi} width={anchoBarra} height={Math.max(hi, d.ingresos ? 1 : 0)} rx="1.2" className="anim-columna fill-chart-income" />
+                <rect style={{ animationDelay: `${i * 45 + 25}ms` }} x={c + 0.4} y={H - hg} width={anchoBarra} height={Math.max(hg, d.gastos ? 1 : 0)} rx="1.2" className="anim-columna fill-chart-expense" />
               </g>
             );
           })}

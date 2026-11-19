@@ -121,8 +121,22 @@ textarea {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* Animaciones                                                         */
+/* ------------------------------------------------------------------ */
+:root {
+  --muelle: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --suave: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Hojas y fondos */
 @keyframes subir {
   from {
+    transform: translateY(100%);
+  }
+}
+@keyframes bajar {
+  to {
     transform: translateY(100%);
   }
 }
@@ -131,16 +145,42 @@ textarea {
     opacity: 0;
   }
 }
+@keyframes desaparecer {
+  to {
+    opacity: 0;
+  }
+}
 .anim-subir {
-  animation: subir 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: subir 0.38s cubic-bezier(0.2, 0.9, 0.25, 1.04);
+}
+.anim-bajar {
+  animation: bajar 0.22s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .anim-aparecer {
-  animation: aparecer 0.18s ease-out;
+  animation: aparecer 0.25s ease-out;
 }
-@media (prefers-reduced-motion: reduce) {
-  .anim-subir,
-  .anim-aparecer {
-    animation: none;
+.anim-desaparecer {
+  animation: desaparecer 0.22s ease-in forwards;
+}
+@media (min-width: 40rem) {
+  /* En escritorio la hoja es una ventana centrada: aparece creciendo. */
+  .anim-subir {
+    animation: emerger 0.3s var(--muelle);
+  }
+  .anim-bajar {
+    animation: hundir 0.2s ease-in forwards;
+  }
+}
+@keyframes emerger {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+@keyframes hundir {
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
   }
 }
 
@@ -152,7 +192,7 @@ textarea {
   }
 }
 .pagina > * {
-  animation: entrar 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: entrar 0.45s var(--suave) both;
 }
 .pagina > :nth-child(2) { animation-delay: 40ms; }
 .pagina > :nth-child(3) { animation-delay: 80ms; }
@@ -161,17 +201,185 @@ textarea {
 .pagina > :nth-child(6) { animation-delay: 200ms; }
 .pagina > :nth-child(7) { animation-delay: 240ms; }
 .pagina > :nth-child(n + 8) { animation-delay: 280ms; }
-/* Pulsación de tarjetas táctiles */
+
+/* Filas de los paneles: entran una tras otra desde la izquierda */
+@keyframes fila {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+.filas > * {
+  animation: fila 0.35s var(--suave) both;
+  animation-delay: 120ms;
+}
+.filas > :nth-child(1) { animation-delay: 60ms; }
+.filas > :nth-child(2) { animation-delay: 90ms; }
+.filas > :nth-child(3) { animation-delay: 120ms; }
+.filas > :nth-child(4) { animation-delay: 150ms; }
+.filas > :nth-child(5) { animation-delay: 180ms; }
+.filas > :nth-child(6) { animation-delay: 210ms; }
+.filas > :nth-child(n + 7) { animation-delay: 240ms; }
+
+/* Título de la pantalla */
+@keyframes titulo {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+    filter: blur(3px);
+  }
+}
+.anim-titulo {
+  animation: titulo 0.4s var(--suave) both;
+}
+
+/* Pulsación de tarjetas y filas táctiles */
 .tarjeta-tactil {
-  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s;
+  transition:
+    transform 0.25s var(--muelle),
+    background-color 0.2s,
+    box-shadow 0.2s;
   -webkit-tap-highlight-color: transparent;
 }
 .tarjeta-tactil:active {
   transform: scale(0.975);
+  transition-duration: 0.1s;
 }
+@media (hover: hover) {
+  .tarjeta-tactil:hover {
+    box-shadow: 0 8px 24px -14px rgba(16, 24, 40, 0.3);
+  }
+}
+
+/* Indicadores que se deslizan (pestañas, control segmentado) e interruptores */
+.deslizador {
+  transition:
+    transform 0.45s var(--muelle),
+    opacity 0.25s;
+}
+.muelle {
+  transition: left 0.35s var(--muelle);
+}
+
+/* Icono de la pestaña al activarse */
+@keyframes rebote {
+  0% {
+    transform: scale(0.7) translateY(3px);
+  }
+  55% {
+    transform: scale(1.15) translateY(-2px);
+  }
+  100% {
+    transform: none;
+  }
+}
+.anim-rebote {
+  animation: rebote 0.45s var(--suave);
+}
+
+/* Aviso inferior */
+@keyframes aviso {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.94);
+  }
+}
+.anim-aviso {
+  animation: aviso 0.4s var(--muelle);
+}
+
+/* Barras de progreso: crecen desde la izquierda */
+@keyframes barra {
+  from {
+    transform: scaleX(0);
+  }
+}
+.anim-barra {
+  transform-origin: left;
+  animation: barra 0.9s var(--suave) 0.15s both;
+}
+
+/* Columnas del gráfico: crecen desde abajo */
+@keyframes columna {
+  from {
+    transform: scaleY(0);
+  }
+}
+.anim-columna {
+  transform-box: fill-box;
+  transform-origin: bottom;
+  animation: columna 0.6s var(--suave) both;
+}
+
+/* Etiquetas y globos que aparecen con un pequeño salto */
+@keyframes pop {
+  from {
+    opacity: 0;
+    scale: 0.9;
+  }
+}
+.anim-pop {
+  animation: pop 0.22s var(--muelle);
+}
+
+/* Cada pulsación del teclado del importe */
+@keyframes tecla {
+  0% {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.03);
+  }
+}
+.anim-tecla {
+  animation: tecla 0.22s var(--suave);
+}
+
+/* Avisos de error o consejo */
+@keyframes alerta {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.anim-alerta {
+  animation: alerta 0.3s var(--suave);
+}
+
+/* Olas de la tarjeta de marca */
+@keyframes ola {
+  50% {
+    transform: scaleY(1.18);
+  }
+}
+.ola,
+.ola-lenta {
+  transform-box: fill-box;
+  transform-origin: bottom;
+}
+.ola {
+  animation: ola 7s ease-in-out infinite;
+}
+.ola-lenta {
+  animation: ola 10s ease-in-out infinite reverse;
+}
+
+/* Cambio de tema claro/oscuro suave */
+body {
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+/* Quien pide menos movimiento no ve ninguna animación */
 @media (prefers-reduced-motion: reduce) {
-  .pagina > * {
-    animation: none;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
   .tarjeta-tactil:active {
     transform: none;

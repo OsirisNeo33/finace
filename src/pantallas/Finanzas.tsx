@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useNavegar, BotonAjustes } from '../navegacion';
-import { Card, Chip, Cifra, IconBadge, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Segmented, Tile, cx } from '../components/ui';
+import { Card, Chip, Cifra, Numero, IconBadge, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Segmented, Tile, cx } from '../components/ui';
 import { IconoAlerta, IconoEscudo, IconoMoneda, IconoTarjeta, IconoTendencia } from '../components/Iconos';
 import { useDatos } from '../contexto';
 import type { Destino, Indicador } from '../domain/salud';
@@ -64,7 +64,7 @@ export function TarjetaSalud({ onClick, compacta }: { onClick?: () => void; comp
           <Label>Salud financiera</Label>
           <p className="mt-1 flex items-baseline gap-1">
             <span className="num text-[34px] leading-none font-semibold" data-testid="salud">
-              {salud.puntos ?? '—'}
+              <Numero texto={salud.puntos === null ? '—' : String(salud.puntos)} />
             </span>
             <span className="num text-[15px] text-muted">/100</span>
           </p>

@@ -6,3 +6,4 @@ dev-dist
 # Restos de tsc -b
 *.tsbuildinfo
 vite.config.js
+src/**/*.js

@@ -83,6 +83,7 @@ function Contenido() {
     setPestana(p === 'calendario' ? 'pagos' : p === 'cobros' ? 'finanzas' : p);
   };
   const props = { periodo, desplazamiento, setDesplazamiento, ir };
+  const indiceActivo = PESTANAS.findIndex(({ id }) => id === pestana || (id === 'inicio' && pestana === 'logros'));
 
   return (
     <NavCtx.Provider value={ir}>
@@ -100,7 +101,13 @@ function Contenido() {
       {/* Barra flotante: 5 pestañas y, a la derecha, el botón + (dentro de la barra para no tapar nunca el contenido) */}
       <nav aria-label="Secciones" className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto flex max-w-md items-center gap-1.5 rounded-[26px] border border-border bg-surface/90 p-1.5 shadow-[0_10px_30px_-12px_rgba(16,24,40,0.25)] backdrop-blur-xl">
-          <ul className="flex min-w-0 flex-1 gap-0.5">
+          <ul className="relative flex min-w-0 flex-1">
+            {/* Píldora que se desliza hasta la pestaña activa */}
+            <li
+              aria-hidden="true"
+              className="deslizador pointer-events-none absolute inset-y-0 left-0 rounded-[20px] bg-brand-soft"
+              style={{ width: `${100 / PESTANAS.length}%`, transform: `translateX(${Math.max(0, indiceActivo) * 100}%) scale(${indiceActivo < 0 ? 0.6 : 1})`, opacity: indiceActivo < 0 ? 0 : 1 }}
+            />
             {PESTANAS.map(({ id, texto, corto, Icono }) => {
               const activo = pestana === id || (id === 'inicio' && pestana === 'logros');
               return (
@@ -110,9 +117,9 @@ function Contenido() {
                     onClick={() => ir(id, id === 'movimientos' ? {} : undefined)}
                     aria-current={activo ? 'page' : undefined}
                     aria-label={texto}
-                    className={`flex min-h-13 w-full flex-col items-center justify-center gap-0.5 rounded-[20px] px-0 text-[10px] min-[375px]:px-0.5 font-medium transition min-[375px]:text-[10.5px] ${activo ? 'bg-brand-soft text-brand' : 'text-muted'}`}
+                    className={`relative flex min-h-13 w-full flex-col items-center justify-center gap-0.5 rounded-[20px] px-0 text-[10px] min-[375px]:px-0.5 font-medium transition-[color,transform] duration-300 active:scale-90 min-[375px]:text-[10.5px] ${activo ? 'text-brand' : 'text-muted'}`}
                   >
-                    <Icono width={22} height={22} strokeWidth={activo ? 2.1 : 1.8} />
+                    <Icono key={activo ? 'activo' : 'inactivo'} className={activo ? 'anim-rebote' : undefined} width={22} height={22} strokeWidth={activo ? 2.1 : 1.8} />
                     <span className="max-w-full truncate tracking-[-0.02em]" aria-hidden="true">
                       {corto ? (
                         <>
@@ -130,7 +137,7 @@ function Contenido() {
           </ul>
           <button
             type="button"
-            className="flex size-13 shrink-0 items-center justify-center rounded-[20px] bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)] transition active:scale-95"
+            className="flex size-13 shrink-0 items-center justify-center rounded-[20px] bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)] transition active:scale-90 [&>svg]:transition-transform [&>svg]:duration-300 active:[&>svg]:rotate-90"
             onClick={() => abrirEditor()}
             aria-label="Añadir movimiento"
           >
