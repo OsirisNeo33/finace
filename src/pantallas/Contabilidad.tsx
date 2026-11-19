@@ -1,3 +1,4 @@
+import { BotonAjustes } from '../navegacion';
 import { useMemo, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -20,7 +21,7 @@ export type VistaContabilidad = 'resumen' | 'calendario';
 export function Contabilidad({ vista, setVista }: { vista: VistaContabilidad; setVista: (v: VistaContabilidad) => void }) {
   return (
     <>
-      <PageHeader title="Contabilidad" subtitle="Tus ingresos y gastos fijos, y lo que te queda" />
+      <PageHeader title="Contabilidad" subtitle="Tus ingresos y gastos fijos, y lo que te queda" action={<BotonAjustes />} />
       <Page>
         <Segmented
           label="Vista"

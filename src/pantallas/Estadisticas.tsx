@@ -1,3 +1,4 @@
+import { BotonAjustes } from '../navegacion';
 import { useMemo, useState } from 'react';
 import { eachDayOfInterval, getISODay, parseISO, differenceInCalendarDays } from 'date-fns';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -65,7 +66,7 @@ export function Estadisticas({ periodo, desplazamiento, setDesplazamiento, ir }:
 
   return (
     <>
-      <PageHeader title="Análisis" subtitle="En qué se va tu dinero y cómo evoluciona" />
+      <PageHeader title="Análisis" subtitle="En qué se va tu dinero y cómo evoluciona" action={<BotonAjustes />} />
       <Page>
         <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={setDesplazamiento} diaInicio={ajustes.diaInicioMes} />
 

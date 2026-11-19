@@ -1,3 +1,5 @@
+import { BotonAjustes } from '../navegacion';
+import { TarjetaSalud } from './Finanzas';
 import { useMemo, useState } from 'react';
 import { FormCuenta, TIPOS_CUENTA } from './ajustes/Cuentas';
 import type { Cuenta } from '../domain/tipos';
@@ -68,7 +70,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
 
   return (
     <>
-      <PageHeader title="Hoy" subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>} />
+      <PageHeader title="Hoy" action={<BotonAjustes />} subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>} />
       <Page>
         <button type="button" className="block w-full text-left transition active:scale-[0.99]" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
           <BrandHero name="Finace">
@@ -122,6 +124,8 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
             </div>
           )}
         </Card>
+
+        {movimientos.length > 0 && esActual && <TarjetaSalud compacta onClick={() => ir('finanzas')} />}
 
         {/* Nivel y reto semanal */}
         {movimientos.length > 0 && esActual && (

@@ -2,20 +2,22 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProveedorDatos, useDatos } from './contexto';
 import { Editor } from './components/Editor';
 import { Aviso } from './components/Aviso';
-import { IconoAjustes, IconoGrafico, IconoHoy, IconoLista, IconoMas, IconoMoneda } from './components/Iconos';
+import { IconoCartera, IconoGrafico, IconoHoy, IconoLista, IconoMas, IconoMoneda } from './components/Iconos';
 import { Inicio } from './pantallas/Inicio';
 import { Movimientos, type Filtro } from './pantallas/Movimientos';
 import { Estadisticas } from './pantallas/Estadisticas';
 import { Ajustes } from './pantallas/Ajustes';
 import { Bienvenida } from './pantallas/Bienvenida';
 import { Contabilidad, type VistaContabilidad } from './pantallas/Contabilidad';
+import { Finanzas, type VistaFinanzas } from './pantallas/Finanzas';
+import { NavCtx } from './navegacion';
 import { Logros } from './pantallas/Logros';
 import { Celebracion } from './components/Celebracion';
 import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
 /** 'calendario' abre Contabilidad directamente en su calendario de pagos. */
-export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'calendario' | 'estadisticas' | 'ajustes' | 'logros';
+export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'calendario' | 'finanzas' | 'estadisticas' | 'ajustes' | 'logros';
 
 export default function App() {
   return (
@@ -45,6 +47,8 @@ function Contenido() {
   const [desplazamiento, setDesplazamiento] = useState(0);
   const [filtro, setFiltro] = useState<Filtro>({});
   const [vistaConta, setVistaConta] = useState<VistaContabilidad>('resumen');
+  const [vistaFinanzas, setVistaFinanzas] = useState<VistaFinanzas>('resumen');
+  const [anterior, setAnterior] = useState<Pestana>('inicio');
   usarTema(ajustes.tema);
 
   const periodo = useMemo(() => periodoDe(new Date(), ajustes.diaInicioMes, desplazamiento), [ajustes.diaInicioMes, desplazamiento]);
@@ -62,24 +66,32 @@ function Contenido() {
     window.scrollTo(0, 0);
   }, [pestana]);
 
+  // Tras borrar todo (o la primera vez), al terminar la bienvenida se empieza en Hoy
+  useEffect(() => {
+    if (!cargando && !ajustes.configurado) setPestana('inicio');
+  }, [cargando, ajustes.configurado]);
+
   if (cargando) return <div className="flex min-h-dvh items-center justify-center text-muted">Cargando…</div>;
   if (!ajustes.configurado) return <Bienvenida />;
 
   const ir = (p: Pestana, f?: Filtro) => {
     if (f) setFiltro(f);
     if (p === 'calendario' || p === 'pagos') setVistaConta(p === 'calendario' ? 'calendario' : 'resumen');
+    if (p === 'ajustes' && pestana !== 'ajustes') setAnterior(pestana);
     setPestana(p === 'calendario' ? 'pagos' : p);
   };
   const props = { periodo, desplazamiento, setDesplazamiento, ir };
 
   return (
+    <NavCtx.Provider value={ir}>
     <div className="min-h-dvh" style={{ paddingBottom: 'calc(6.5rem + env(safe-area-inset-bottom))' }}>
       <main>
         {pestana === 'inicio' && <Inicio {...props} />}
         {pestana === 'movimientos' && <Movimientos {...props} filtro={filtro} setFiltro={setFiltro} />}
         {pestana === 'pagos' && <Contabilidad vista={vistaConta} setVista={setVistaConta} />}
         {pestana === 'estadisticas' && <Estadisticas {...props} />}
-        {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} />}
+        {pestana === 'finanzas' && <Finanzas vista={vistaFinanzas} setVista={setVistaFinanzas} />}
+        {pestana === 'ajustes' && <Ajustes irA={(p) => ir(p)} onVolver={() => ir(anterior)} />}
         {pestana === 'logros' && <Logros onVolver={() => ir('inicio')} />}
       </main>
 
@@ -96,7 +108,7 @@ function Contenido() {
                     onClick={() => ir(id, id === 'movimientos' ? {} : undefined)}
                     aria-current={activo ? 'page' : undefined}
                     aria-label={texto}
-                    className={`flex min-h-13 w-full flex-col items-center justify-center gap-0.5 rounded-[20px] px-0.5 text-[10.5px] font-medium transition ${activo ? 'bg-brand-soft text-brand' : 'text-muted'}`}
+                    className={`flex min-h-13 w-full flex-col items-center justify-center gap-0.5 rounded-[20px] px-0 text-[10px] min-[375px]:px-0.5 font-medium transition min-[375px]:text-[10.5px] ${activo ? 'bg-brand-soft text-brand' : 'text-muted'}`}
                   >
                     <Icono width={22} height={22} strokeWidth={activo ? 2.1 : 1.8} />
                     <span className="max-w-full truncate tracking-[-0.02em]" aria-hidden="true">
@@ -129,6 +141,7 @@ function Contenido() {
       {!editor.abierto && <Celebracion onVerLogros={() => ir('logros')} />}
       <Aviso />
     </div>
+    </NavCtx.Provider>
   );
 }
 
@@ -136,6 +149,6 @@ const PESTANAS = [
   { id: 'inicio', texto: 'Hoy', corto: undefined, Icono: IconoHoy },
   { id: 'movimientos', texto: 'Movimientos', corto: 'Movim.', Icono: IconoLista },
   { id: 'pagos', texto: 'Contabilidad', corto: 'Contab.', Icono: IconoMoneda },
+  { id: 'finanzas', texto: 'Finanzas', corto: undefined, Icono: IconoCartera },
   { id: 'estadisticas', texto: 'Análisis', corto: undefined, Icono: IconoGrafico },
-  { id: 'ajustes', texto: 'Ajustes', corto: undefined, Icono: IconoAjustes },
 ] as const;

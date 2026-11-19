@@ -166,6 +166,40 @@ const capturas = process.argv[2];
   await foto('10-pagos');
   await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
 
+  // Finanzas: deuda cara, pago con deshacer, inversión y consejos
+  await p.getByRole('button', { name: 'Finanzas', exact: true }).click();
+  await p.getByRole('tab', { name: 'Deudas' }).click();
+  await p.getByRole('button', { name: '+ Añadir deuda' }).click();
+  await p.getByLabel('Tipo').selectOption('tarjeta');
+  await p.getByLabel('Nombre').fill('Tarjeta Visa');
+  await p.getByLabel('Lo que debes hoy').fill('1200');
+  await p.getByLabel('Importe inicial').fill('1500');
+  await p.getByLabel('Cuota al mes').fill('100');
+  await p.getByLabel('Interés TAE (%)').fill('21');
+  await p.getByText(/Terminarías en/).waitFor();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByTestId('deuda-total').filter({ hasText: '1.200,00' }).waitFor();
+  await p.getByRole('button', { name: /Tarjeta Visa/ }).click();
+  await p.getByText(/terminas en/).waitFor();
+  await p.getByRole('button', { name: 'Registrar pago' }).click();
+  await p.getByTestId('deuda-pendiente').filter({ hasText: '1.100,00' }).waitFor();
+  await p.getByRole('button', { name: 'Deshacer' }).click();
+  await p.getByTestId('deuda-pendiente').filter({ hasText: '1.200,00' }).waitFor();
+  await p.getByRole('dialog').getByRole('button', { name: 'Cerrar' }).click();
+  await p.getByRole('tab', { name: 'Inversiones' }).click();
+  await p.getByRole('button', { name: '+ Añadir inversión' }).click();
+  await p.getByLabel('Nombre').fill('Fondo indexado');
+  await p.getByRole('button', { name: 'MyInvestor' }).click();
+  await p.getByLabel('Dinero aportado').fill('1000');
+  await p.getByLabel('Valor actual').fill('1100');
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByTestId('valor-inversiones').filter({ hasText: '1.100,00' }).waitFor();
+  await p.getByRole('tab', { name: 'Resumen' }).click();
+  await p.locator('[data-consejo="caras"]').getByText(/Tarjeta Visa/).waitFor();
+  assert.match(await p.getByTestId('salud').innerText(), /^\d+$/, 'hay puntuación de salud');
+  await foto('12-finanzas');
+  await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
+
   // Copia de seguridad: exportar, borrar todo, restaurar
   const [descarga] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Crear copia/ }).click()]);
   const ruta = await descarga.path();
@@ -181,6 +215,10 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: /Cuentas/ }).filter({ hasText: '4' }).waitFor();
   await p.getByRole('button', { name: 'Hoy', exact: true }).click();
   await p.getByTestId('gastos').filter({ hasText: '77,49' }).waitFor();
+  await p.getByRole('button', { name: 'Finanzas', exact: true }).click();
+  await p.getByRole('tab', { name: 'Deudas' }).click();
+  await p.getByRole('button', { name: /Tarjeta Visa/ }).waitFor();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
 
   // Actualizar el saldo de un banco desde el inicio (no debe contar como gasto)
   await p.getByRole('button', { name: 'Revolut: actualizar saldo' }).click();

@@ -1,3 +1,4 @@
+import { BotonAjustes } from '../navegacion';
 import { useMemo, useState } from 'react';
 import { useDatos } from '../contexto';
 import { FilaMovimiento } from '../components/FilaMovimiento';
@@ -53,6 +54,7 @@ export function Movimientos({ periodo, desplazamiento, setDesplazamiento, filtro
     <>
       <PageHeader
         title="Movimientos"
+        action={<BotonAjustes />}
         subtitle={
           <>
             {filtrados.length} {filtrados.length === 1 ? 'movimiento' : 'movimientos'}

@@ -77,3 +77,18 @@ export const IconoHoy = base(
     <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
   </>,
 );
+export const IconoEscudo = base(<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.3-7.5 9.5-4.3-1.2-7.5-4.9-7.5-9.5V6zM8.8 12l2.2 2.2 4.4-4.4" />);
+export const IconoTarjeta = base(
+  <>
+    <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+    <path d="M2.5 9.5h19M6.5 15h4" />
+  </>,
+);
+export const IconoAlerta = base(<path d="M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.1" />);
+export const IconoTendencia = base(<path d="M3.5 17.5l6-6 4 4 7-7.5M15 8h5.5v5.5" />);
+export const IconoCartera = base(
+  <>
+    <path d="M4 7.5h15a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18V6A1.5 1.5 0 0 1 5 4.5h11" />
+    <path d="M16 13.5h.1" />
+  </>,
+);

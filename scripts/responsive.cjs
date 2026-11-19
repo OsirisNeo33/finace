@@ -53,7 +53,7 @@ const revisar = () => {
     if (r.height < 40 || r.width < 40) out.push(`PEQUEÑO «${desc(el)}» ${Math.round(r.width)}x${Math.round(r.height)}`);
   }
   // Chips (etiquetas de estado) partidos en dos líneas o más anchos que su tarjeta
-  for (const el of document.querySelectorAll('span.rounded-full.border')) {
+  for (const el of document.querySelectorAll('span.rounded-full.border.text-\\[12px\\]')) {
     if (!visible(el)) continue;
     const r = el.getBoundingClientRect();
     if (r.height > 30) out.push(`CHIP-2-LINEAS «${desc(el)}» ${Math.round(r.width)}x${Math.round(r.height)}`);
@@ -109,7 +109,7 @@ const revisar = () => {
     await mov(['4', ',', '5'], /Restaurantes/);
     await mov(['9', '8', '7', ',', '6', '5'], /Transporte/);
 
-    await tab('Ajustes');
+    await p.getByRole('main').getByRole('button', { name: 'Ajustes', exact: true }).click();
     await mirar('ajustes');
     await p.getByRole('button', { name: /Presupuestos/ }).click();
     await p.getByRole('button', { name: 'Definir' }).click();
@@ -174,6 +174,35 @@ const revisar = () => {
     await mirar('analisis');
     await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await mirar('analisis-final');
+    await tab('Finanzas');
+    await mirar('finanzas');
+    await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await mirar('finanzas-final');
+    await arriba();
+    await p.getByRole('tab', { name: 'Deudas' }).click();
+    await p.getByRole('button', { name: '+ Añadir deuda' }).click();
+    await p.getByLabel('Tipo').selectOption('hipoteca');
+    await p.getByLabel('Nombre').fill('Hipoteca del piso de la playa');
+    await p.getByLabel('Lo que debes hoy').fill('187654,32');
+    await p.getByLabel('Importe inicial').fill('240000');
+    await p.getByLabel('Cuota al mes').fill('987,65');
+    await p.getByLabel('Interés TAE (%)').fill('3,25');
+    await mirar('hoja-deuda');
+    await p.getByRole('button', { name: 'Guardar' }).click();
+    await mirar('deudas');
+    await p.getByRole('button', { name: /Hipoteca del piso/ }).click();
+    await mirar('detalle-deuda');
+    await p.getByRole('dialog').getByRole('button', { name: 'Cerrar' }).click();
+    await p.getByRole('tab', { name: 'Inversiones' }).click();
+    await p.getByRole('button', { name: '+ Añadir inversión' }).click();
+    await p.getByLabel('Nombre').fill('Fondo indexado MSCI World acumulación');
+    await p.getByLabel('Dinero aportado').fill('25000');
+    await p.getByLabel('Valor actual').fill('31234,56');
+    await mirar('hoja-inversion');
+    await p.getByRole('button', { name: 'Guardar' }).click();
+    await mirar('inversiones');
+    await p.getByRole('tab', { name: 'Resumen' }).click();
+    await mirar('finanzas-con-datos');
     await tab('Hoy');
     await p.getByRole('button', { name: /Ver logros/ }).click();
     await mirar('logros');
