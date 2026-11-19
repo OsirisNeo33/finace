@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { aCentimos, formatear, pulsarTecla } from './dinero';
-import { periodoDe, fechasPendientes, diasRestantes } from './fechas';
+import { periodoDe, fechasPendientes, diasRestantes, ocurrenciasEnRango } from './fechas';
 import { resumen, saldosCuentas, progresoPresupuestos, sugerirCategoria, agruparPorDia, racha } from './calculos';
 import type { Cuenta, Movimiento } from './tipos';
 
@@ -120,5 +120,24 @@ describe('cálculos', () => {
     expect(racha(new Set(['2026-11-13', '2026-11-12', '2026-11-11', '2026-11-09']), '2026-11-13', prev)).toBe(3);
     expect(racha(new Set(['2026-11-12']), '2026-11-13', prev)).toBe(1);
     expect(racha(new Set([]), '2026-11-13', prev)).toBe(0);
+  });
+});
+
+import { saldoInicialPara } from './bancos';
+describe('bancos', () => {
+  it('ajusta el saldo inicial para que el saldo actual sea el que ves en el banco', () => {
+    // inicial 1.000 €, gastos apuntados −200 € → actual 800 €; el banco dice 750 €
+    expect(saldoInicialPara(75000, 80000, 100000)).toBe(95000);
+    // cuenta nueva sin movimientos
+    expect(saldoInicialPara(123456, 0, 0)).toBe(123456);
+  });
+});
+
+describe('calendario de pagos', () => {
+  it('ocurrencias de un mes', () => {
+    expect(ocurrenciasEnRango('2026-01-31', 'mensual', '2026-02-01', '2026-02-28')).toEqual(['2026-02-28']);
+    expect(ocurrenciasEnRango('2026-11-02', 'semanal', '2026-11-01', '2026-11-30')).toEqual(['2026-11-02', '2026-11-09', '2026-11-16', '2026-11-23', '2026-11-30']);
+    expect(ocurrenciasEnRango('2025-03-15', 'anual', '2026-11-01', '2026-11-30')).toEqual([]);
+    expect(ocurrenciasEnRango('2026-12-05', 'mensual', '2026-11-01', '2026-11-30')).toEqual([]);
   });
 });

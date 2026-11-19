@@ -1,138 +1,124 @@
 @import 'tailwindcss';
 
+/* El tema (Sistema / Claro / Oscuro) se elige en Ajustes: la app pone la clase .dark en <html>. */
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --color-marca: #0f766e;
-  --color-marca-suave: #ccfbf1;
-  --color-gasto: #dc2626;
-  --color-ingreso: #059669;
-}
-
+/* Sistema de diseño: fondo gris claro, tarjetas blancas muy redondeadas, azul intenso. */
 :root {
   color-scheme: light;
-  --fondo: #f6f7f9;
-  --superficie: #ffffff;
-  --superficie-2: #f1f3f5;
-  --texto: #0f172a;
-  --texto-2: #64748b;
-  --borde: #e5e7eb;
+  --bg: #eceef1;
+  --surface: #ffffff;
+  --surface-2: #f5f6f8;
+  --surface-dark: #141518;
+  --text: #121317;
+  --muted: #747a86;
+  --border: #e3e5e9;
+  --brand: #2b5ce6;
+  --brand-strong: #1f47c2;
+  --brand-soft: #e7edfd;
+  --on-brand: #ffffff;
+  --accent: #f09a4f;
+  --success: #1e8a5a;
+  --success-soft: #e3f4ec;
+  --warning: #c26a12;
+  --warning-soft: #fdf0e1;
+  --danger: #e0533d;
+  --danger-soft: #fce9e6;
+  /* Gráficos (validados: claro sobre #fff, oscuro sobre #17181c) */
+  --chart-income: #2b5ce6;
+  --chart-expense: #eb6834;
 }
 
 .dark {
   color-scheme: dark;
-  --fondo: #0b0f14;
-  --superficie: #151b22;
-  --superficie-2: #1e2630;
-  --texto: #e8edf2;
-  --texto-2: #94a3b8;
-  --borde: #263040;
-  --color-marca: #2dd4bf;
-  --color-marca-suave: #134e4a;
-  --color-gasto: #f87171;
-  --color-ingreso: #34d399;
+  --bg: #0b0c0e;
+  --surface: #17181c;
+  --surface-2: #111215;
+  --surface-dark: #000000;
+  --text: #f2f3f5;
+  --muted: #9298a3;
+  --border: #262830;
+  --brand: #5482ff;
+  --brand-strong: #7a9dff;
+  --brand-soft: #18203a;
+  --on-brand: #ffffff;
+  --accent: #f5aa66;
+  --success: #4cc48a;
+  --success-soft: #12261d;
+  --warning: #f0a94d;
+  --warning-soft: #2a1f10;
+  --danger: #ff7a66;
+  --danger-soft: #2c1512;
+  --chart-income: #5482ff;
+  --chart-expense: #d95926;
 }
 
-html,
-body {
-  background: var(--fondo);
-  color: var(--texto);
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-dark: var(--surface-dark);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-chart-income: var(--chart-income);
+  --color-chart-expense: var(--chart-expense);
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
 }
 
 body {
   min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  overscroll-behavior-y: none;
+}
+
+/* iOS amplía la página al enfocar campos con letra menor de 16px. */
+input,
+select,
+textarea {
+  font-size: 16px;
 }
 
 @layer components {
-.tarjeta {
-  background: var(--superficie);
-  border: 1px solid var(--borde);
-  border-radius: 1.25rem;
-}
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
 
-.texto-2 {
-  color: var(--texto-2);
-}
+  /* Cifras e importes: monoespaciada con números tabulares. */
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
 
-.campo {
-  width: 100%;
-  background: var(--superficie-2);
-  border: 1px solid var(--borde);
-  border-radius: 0.75rem;
-  padding: 0.7rem 0.85rem;
-  color: var(--texto);
-  font-size: 1rem;
-}
-.campo:focus {
-  outline: 2px solid var(--color-marca);
-  outline-offset: 1px;
-}
-
-.boton {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border-radius: 0.85rem;
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  min-height: 44px;
-  transition: transform 0.1s, opacity 0.15s;
-}
-.boton:active {
-  transform: scale(0.97);
-}
-.boton:disabled {
-  opacity: 0.4;
-}
-.boton-primario {
-  background: var(--color-marca);
-  color: white;
-}
-.dark .boton-primario {
-  color: #042f2e;
-}
-.boton-secundario {
-  background: var(--superficie-2);
-  color: var(--texto);
-}
-
-.chip {
-  border-radius: 999px;
-  padding: 0.4rem 0.8rem;
-  font-size: 0.875rem;
-  border: 1px solid var(--borde);
-  background: var(--superficie);
-  white-space: nowrap;
-  min-height: 36px;
-}
-.chip[aria-pressed='true'] {
-  background: var(--color-marca);
-  border-color: var(--color-marca);
-  color: white;
-}
-.dark .chip[aria-pressed='true'] {
-  color: #042f2e;
-}
-
-.importe {
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-}
-
-.pb-seguro {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.sin-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.sin-scrollbar {
-  scrollbar-width: none;
-}
+  .sin-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .sin-scrollbar {
+    scrollbar-width: none;
+  }
 }
 
 @keyframes subir {
@@ -154,6 +140,45 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .anim-subir,
   .anim-aparecer {
+    animation: none;
+  }
+}
+
+/* Gamificación */
+@keyframes confeti {
+  from {
+    transform: translateY(-10vh) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(105vh) rotate(540deg);
+    opacity: 0.7;
+  }
+}
+@keyframes premio {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.anim-confeti {
+  animation: confeti 2s ease-in forwards;
+}
+.anim-premio {
+  animation: premio 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .anim-confeti {
+    display: none;
+  }
+  .anim-premio {
     animation: none;
   }
 }

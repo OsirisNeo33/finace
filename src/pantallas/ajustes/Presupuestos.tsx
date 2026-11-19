@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
-import { CampoImporte } from '../../components/Selectores';
+import { AmountField, Button, Emoji, Panel, SelectField, TileButton } from '../../components/ui';
 import { aCentimos } from '../../domain/dinero';
 import type { Presupuesto } from '../../domain/tipos';
 import { db, nuevoId } from '../../db/db';
@@ -17,45 +17,33 @@ export function Presupuestos() {
 
   return (
     <>
-      <p className="texto-2 text-sm">Pon un límite mensual. Verás una barra verde, ámbar al 80 % y roja si te pasas.</p>
-      <section className="tarjeta p-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="font-semibold">Presupuesto total del mes</p>
-            <p className="texto-2 text-xs">Con él, el inicio te dice cuánto puedes gastar al día.</p>
-          </div>
-          <button className="chip" onClick={() => setEditando(global ?? { categoriaId: null })}>
-            {global ? dinero(global.importe) : 'Definir'}
-          </button>
-        </div>
-      </section>
-      {porCategoria.length > 0 && (
-        <div className="tarjeta divide-y overflow-hidden">
-          {porCategoria.map((p) => {
-            const c = categoriaPorId.get(p.categoriaId!);
-            return (
-              <button key={p.id} className="flex w-full items-center gap-3 px-4 py-3 text-left" style={{ borderColor: 'var(--borde)' }} onClick={() => setEditando(p)}>
-                <span className="text-xl">{c?.icono}</span>
-                <span className="flex-1">{c?.nombre}</span>
-                <span className="importe font-semibold">{dinero(p.importe)}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-      {libres.length > 0 && (
-        <label className="text-sm">
-          <span className="texto-2">Añadir presupuesto para una categoría</span>
-          <select className="campo mt-1" value="" onChange={(e) => e.target.value && setEditando({ categoriaId: e.target.value })}>
+      <Panel title="Total del mes" footer="Con un presupuesto total, el inicio te dice cuánto puedes gastar al día. La barra se pone naranja al 80 % y roja si te pasas.">
+        <TileButton
+          icon={<Emoji>🎯</Emoji>}
+          title="Presupuesto total del mes"
+          subtitle={global ? 'Toca para cambiarlo' : 'Sin definir'}
+          detail={global ? <span className="num text-[15px] font-semibold text-text">{dinero(global.importe)}</span> : <span className="font-semibold text-brand">Definir</span>}
+          chevron
+          aria-label={global ? `Presupuesto total: ${dinero(global.importe)}` : 'Definir'}
+          onClick={() => setEditando(global ?? { categoriaId: null })}
+        />
+      </Panel>
+      <Panel title="Por categoría" detail={porCategoria.length ? <span className="num">{porCategoria.length}</span> : undefined}>
+        {porCategoria.map((p) => {
+          const c = categoriaPorId.get(p.categoriaId!);
+          return <TileButton key={p.id} icon={<Emoji>{c?.icono}</Emoji>} title={c?.nombre} detail={<span className="num text-[15px] font-semibold text-text">{dinero(p.importe)}</span>} chevron onClick={() => setEditando(p)} />;
+        })}
+        {libres.length > 0 && (
+          <SelectField label="Añadir presupuesto para una categoría" value="" onChange={(e) => e.target.value && setEditando({ categoriaId: e.target.value })}>
             <option value="">Elige una categoría…</option>
             {libres.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.icono} {c.nombre}
               </option>
             ))}
-          </select>
-        </label>
-      )}
+          </SelectField>
+        )}
+      </Panel>
       {editando && <FormPresupuesto p={editando} onCerrar={() => setEditando(null)} />}
     </>
   );
@@ -67,15 +55,12 @@ function FormPresupuesto({ p, onCerrar }: { p: Partial<Presupuesto>; onCerrar: (
   const c = p.categoriaId ? categoriaPorId.get(p.categoriaId) : undefined;
   return (
     <Hoja titulo={c ? `${c.icono} ${c.nombre}` : 'Presupuesto total'} onCerrar={onCerrar}>
-      <div className="flex flex-col gap-3 px-5 pb-5">
-        <label className="text-sm">
-          <span className="texto-2">Límite mensual</span>
-          <div className="mt-1">
-            <CampoImporte valor={valor} onCambio={setValor} autoFocus />
-          </div>
-        </label>
-        <button
-          className="boton boton-primario"
+      <div className="space-y-3 px-4 pb-5">
+        <Panel title="Límite">
+          <AmountField label="Límite mensual" value={valor} onChange={setValor} autoFocus />
+        </Panel>
+        <Button
+          className="w-full"
           disabled={aCentimos(valor) <= 0}
           onClick={async () => {
             await db.presupuestos.put({ id: p.id ?? nuevoId(), categoriaId: p.categoriaId ?? null, importe: aCentimos(valor) });
@@ -83,18 +68,18 @@ function FormPresupuesto({ p, onCerrar }: { p: Partial<Presupuesto>; onCerrar: (
           }}
         >
           Guardar
-        </button>
+        </Button>
         {p.id && (
-          <button
-            className="boton boton-secundario"
-            style={{ color: 'var(--color-gasto)' }}
+          <Button
+            variant="danger"
+            className="w-full"
             onClick={async () => {
               await db.presupuestos.delete(p.id!);
               onCerrar();
             }}
           >
             Quitar presupuesto
-          </button>
+          </Button>
         )}
       </div>
     </Hoja>

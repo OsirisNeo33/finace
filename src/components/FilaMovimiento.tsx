@@ -1,5 +1,6 @@
 import type { Movimiento } from '../domain/tipos';
 import { useDatos } from '../contexto';
+import { Emoji, cx } from './ui';
 
 export function FilaMovimiento({ m }: { m: Movimiento }) {
   const { categoriaPorId, cuentaPorId, dinero, abrirEditor, cuentas } = useDatos();
@@ -9,20 +10,20 @@ export function FilaMovimiento({ m }: { m: Movimiento }) {
   const titulo = esTransf ? 'Transferencia' : cat?.nombre ?? 'Sin categoría';
   const detalle = esTransf
     ? `${cuenta?.nombre ?? '?'} → ${m.cuentaDestinoId ? cuentaPorId.get(m.cuentaDestinoId)?.nombre ?? '?' : '?'}`
-    : [m.nota, cuentas.length > 1 ? cuenta?.nombre : undefined].filter(Boolean).join(' · ');
-  const color = m.tipo === 'gasto' ? 'var(--texto)' : m.tipo === 'ingreso' ? 'var(--color-ingreso)' : 'var(--texto-2)';
+    : [m.nota, cuentas.length > 1 ? cuenta?.nombre : undefined, ...m.etiquetas.map((e) => '#' + e)].filter(Boolean).join(' · ');
 
   return (
-    <button className="flex w-full items-center gap-3 px-4 py-2.5 text-left active:opacity-60" onClick={() => abrirEditor(m)}>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg" style={{ background: (cat?.color ?? '#64748b') + '22' }}>
-        {esTransf ? '🔁' : cat?.icono ?? '❔'}
-      </span>
+    <button
+      type="button"
+      className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+      onClick={() => abrirEditor(m)}
+    >
+      <Emoji>{esTransf ? '🔁' : cat?.icono ?? '❔'}</Emoji>
       <span className="min-w-0 flex-1">
-        <span className="block truncate font-medium">{titulo}</span>
-        {detalle && <span className="texto-2 block truncate text-sm">{detalle}</span>}
-        {m.etiquetas.length > 0 && <span className="block truncate text-xs text-[var(--color-marca)]">{m.etiquetas.map((e) => '#' + e).join(' ')}</span>}
+        <span className="block truncate text-[15px] font-medium">{titulo}</span>
+        {detalle && <span className="block truncate text-[13px] text-muted">{detalle}</span>}
       </span>
-      <span className="importe shrink-0 font-semibold" style={{ color }}>
+      <span className={cx('num shrink-0 text-[15px] font-semibold', m.tipo === 'ingreso' ? 'text-success' : m.tipo === 'transferencia' ? 'text-muted' : 'text-text')}>
         {m.tipo === 'gasto' ? dinero(-m.importe) : m.tipo === 'ingreso' ? dinero(m.importe, { signo: true }) : dinero(m.importe)}
       </span>
     </button>

@@ -52,7 +52,7 @@ export async function generarRecurrentes(hoy = hoyISO()): Promise<number> {
   await db.transaction('rw', db.recurrentes, db.movimientos, async () => {
     const recs = await db.recurrentes.toArray();
     for (const r of recs) {
-      if (!r.activo) continue;
+      if (!r.activo || r.automatico === false) continue;
       const fechas = fechasPendientes(r.inicio, r.ultimaGeneracion, r.frecuencia, hoy);
       if (!fechas.length) continue;
       const t = ahora();
@@ -163,7 +163,16 @@ export async function exportarCSV(): Promise<string> {
   return '﻿' + filas.map((f) => f.map(csvCelda).join(';')).join('\n');
 }
 
-export function descargar(nombre: string, contenido: string, tipo: string) {
+/** Guarda un archivo: en la web lo descarga; en la app de iPhone abre el menú Compartir (Guardar en Archivos, iCloud…). */
+export async function descargar(nombre: string, contenido: string, tipo: string) {
+  const { Capacitor } = await import('@capacitor/core');
+  if (Capacitor.isNativePlatform()) {
+    const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem');
+    const { Share } = await import('@capacitor/share');
+    const { uri } = await Filesystem.writeFile({ path: nombre, data: contenido, directory: Directory.Cache, encoding: Encoding.UTF8 });
+    await Share.share({ title: nombre, url: uri });
+    return;
+  }
   const url = URL.createObjectURL(new Blob([contenido], { type: tipo }));
   const a = document.createElement('a');
   a.href = url;

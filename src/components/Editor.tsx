@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { addDays } from 'date-fns';
 import { useDatos } from '../contexto';
 import { Hoja } from './Hoja';
-import { IconoBorrar, IconoPapelera } from './Iconos';
+import { IconoBorrar, IconoCalendario, IconoPapelera } from './Iconos';
+import { Button, Card, ChipButton, Field, FieldRow, Label, Panel, Segmented, SelectField, cx } from './ui';
 import { aCentimos, pulsarTecla } from '../domain/dinero';
 import { aISO, hoyISO, fechaCorta } from '../domain/fechas';
 import { sugerirCategoria } from '../domain/calculos';
@@ -92,11 +93,12 @@ export function Editor() {
       await guardarRecurrente({ id: recurrenteId, tipo, importe, cuentaId, categoriaId: catId, nota: n || undefined, frecuencia: repetir, inicio: fecha, ultimaGeneracion: fecha, activo: true });
       datos.recurrenteId = recurrenteId;
     }
+    const primeroHoy = !movimientos.some((m) => !m.recurrenteId && aISO(new Date(m.creadoEn)) === hoy);
     const id = await crearMovimiento(datos);
     navigator.vibrate?.(15);
     cerrarEditor();
     const nombre = tipo === 'transferencia' ? 'Transferencia' : categorias.find((c) => c.id === catId)?.nombre ?? '';
-    avisar(`${nombre} · ${dinero(importe)} guardado`, {
+    avisar(`${nombre} · ${dinero(importe)} guardado${datos.recurrenteId ? '' : ` · +${primeroHoy ? 15 : 5} XP`}`, {
       etiqueta: 'Deshacer',
       hacer: async () => {
         await db.movimientos.delete(id);
@@ -134,7 +136,7 @@ export function Editor() {
     return () => window.removeEventListener('keydown', f);
   });
 
-  const colorImporte = tipo === 'gasto' ? 'var(--color-gasto)' : tipo === 'ingreso' ? 'var(--color-ingreso)' : 'var(--texto)';
+  const colorImporte = tipo === 'ingreso' ? 'text-success' : 'text-text';
   const tocarCategoria = (id: string) => {
     setCategoriaId(id);
     if (!existente) guardar(id);
@@ -142,57 +144,52 @@ export function Editor() {
 
   return (
     <Hoja onCerrar={cerrarEditor}>
-      <div className="flex flex-col gap-3 px-4 pt-4 pb-3">
+      <div className="space-y-3 px-4 pt-4 pb-3">
         {/* Tipo */}
         <div className="flex items-center gap-2">
-          <div className="flex flex-1 rounded-xl p-1" style={{ background: 'var(--superficie-2)' }} role="tablist">
-            {TIPOS.map((t) => (
-              <button
-                key={t.id}
-                role="tab"
-                aria-selected={tipo === t.id}
-                className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition ${tipo === t.id ? 'shadow-sm' : 'texto-2'}`}
-                style={tipo === t.id ? { background: 'var(--superficie)' } : undefined}
-                onClick={() => {
-                  setTipo(t.id);
-                  setCategoriaId(undefined);
-                  setError('');
-                }}
-              >
-                {t.nombre}
-              </button>
-            ))}
+          <div className="min-w-0 flex-1">
+            <Segmented
+              label="Tipo de movimiento"
+              value={tipo}
+              onChange={(t) => {
+                setTipo(t);
+                setCategoriaId(undefined);
+                setError('');
+              }}
+              options={TIPOS.map((t) => ({ value: t.id, label: t.nombre }))}
+            />
           </div>
-          <button className="texto-2 px-2 text-sm" onClick={cerrarEditor}>
+          <button type="button" className="min-h-11 px-2 text-[15px] font-medium text-brand" onClick={cerrarEditor}>
             Cerrar
           </button>
         </div>
 
         {/* Importe */}
-        <div className="text-center">
-          <div className="importe text-5xl font-bold" style={{ color: texto ? colorImporte : 'var(--texto-2)' }} data-testid="importe">
+        <Card className="py-3 text-center">
+          <Label>{tipo === 'gasto' ? 'Gasto' : tipo === 'ingreso' ? 'Ingreso' : 'Transferencia'}</Label>
+          <div className={cx('num text-[40px] leading-tight font-semibold', texto ? colorImporte : 'text-muted')} data-testid="importe">
             {texto ? `${texto.replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ` : '0 '}
-            <span className="text-3xl">{dinero(0).replace(/[\d.,\s]/g, '')}</span>
+            <span className="text-[26px]">{dinero(0).replace(/[\d.,\s]/g, '')}</span>
           </div>
-          <div className="h-5 text-sm" style={{ color: 'var(--color-gasto)' }}>
+          <div className="h-5 text-[13px] font-medium text-danger" role="alert">
             {error}
           </div>
-        </div>
+        </Card>
 
         {/* Fecha + cuenta + detalles */}
         <div className="sin-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4">
-          <button className="chip" aria-pressed={fecha === hoy} onClick={() => setFecha(hoy)}>
+          <ChipButton active={fecha === hoy} onClick={() => setFecha(hoy)}>
             Hoy
-          </button>
-          <button className="chip" aria-pressed={fecha === ayer} onClick={() => setFecha(ayer)}>
+          </ChipButton>
+          <ChipButton active={fecha === ayer} onClick={() => setFecha(ayer)}>
             Ayer
-          </button>
-          <label className="chip relative cursor-pointer" aria-pressed={fecha !== hoy && fecha !== ayer}>
-            📅 {fecha !== hoy && fecha !== ayer ? fechaCorta(fecha) : 'Otra'}
+          </ChipButton>
+          <label className={cx('relative inline-flex min-h-10 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3.5 text-[14px] font-medium whitespace-nowrap', fecha !== hoy && fecha !== ayer ? 'border-transparent bg-brand-soft text-brand' : 'border-border bg-surface')}>
+            <IconoCalendario width={16} height={16} /> {fecha !== hoy && fecha !== ayer ? <span className="num">{fechaCorta(fecha)}</span> : 'Otra'}
             <input type="date" className="absolute inset-0 opacity-0" value={fecha} max="2100-12-31" onChange={(e) => e.target.value && setFecha(e.target.value)} aria-label="Elegir fecha" />
           </label>
           {cuentas.length > 1 && tipo !== 'transferencia' && (
-            <label className="chip relative">
+            <label className="relative inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[14px] font-medium whitespace-nowrap">
               {cuentaPorId.get(cuentaId)?.icono} {cuentaPorId.get(cuentaId)?.nombre} ▾
               <select className="absolute inset-0 opacity-0" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} aria-label="Cuenta">
                 {cuentas.map((c) => (
@@ -203,80 +200,75 @@ export function Editor() {
               </select>
             </label>
           )}
-          <button className="chip" aria-pressed={verDetalles} onClick={() => setVerDetalles((v) => !v)}>
-            ✏️ Nota{repetir !== 'no' ? ' · 🔁' : ''}
-          </button>
+          <ChipButton active={verDetalles} onClick={() => setVerDetalles((v) => !v)}>
+            Nota{repetir !== 'no' ? ' · se repite' : ''}
+          </ChipButton>
         </div>
 
         {verDetalles && (
-          <div className="flex flex-col gap-2">
-            <input className="campo" placeholder="Nota (usa #etiqueta para agrupar, ej. #viaje)" value={nota} onChange={(e) => setNota(e.target.value)} maxLength={140} />
+          <Panel>
+            <Field label="Nota" placeholder="Nota (usa #etiqueta para agrupar, ej. #viaje)" value={nota} onChange={(e) => setNota(e.target.value)} maxLength={140} />
             {sugerida && sugerida !== categoriaId && tipo !== 'transferencia' && (
-              <button className="chip self-start" onClick={() => (existente ? setCategoriaId(sugerida) : tocarCategoria(sugerida))}>
-                ¿{cats.find((c) => c.id === sugerida)?.icono} {cats.find((c) => c.id === sugerida)?.nombre}?
-              </button>
-            )}
-            {!existente && tipo !== 'transferencia' && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="texto-2">Repetir:</span>
-                {(['no', 'semanal', 'mensual', 'anual'] as const).map((r) => (
-                  <button key={r} className="chip" aria-pressed={repetir === r} onClick={() => setRepetir(r)}>
-                    {r === 'no' ? 'No' : r[0].toUpperCase() + r.slice(1)}
-                  </button>
-                ))}
+              <div className="px-1">
+                <ChipButton active onClick={() => (existente ? setCategoriaId(sugerida) : tocarCategoria(sugerida))}>
+                  ¿{cats.find((c) => c.id === sugerida)?.icono} {cats.find((c) => c.id === sugerida)?.nombre}?
+                </ChipButton>
               </div>
             )}
-          </div>
+            {!existente && tipo !== 'transferencia' && (
+              <div className="space-y-1.5 px-1 pb-1">
+                <p className="px-2 text-[12px] font-medium text-muted">Repetir</p>
+                <Segmented
+                  label="Repetir"
+                  value={repetir}
+                  onChange={setRepetir}
+                  options={(['no', 'semanal', 'mensual', 'anual'] as const).map((r) => ({ value: r, label: r === 'no' ? 'No' : r[0].toUpperCase() + r.slice(1) }))}
+                />
+              </div>
+            )}
+          </Panel>
         )}
 
         {/* Transferencia */}
         {tipo === 'transferencia' && (
-          <div className="grid grid-cols-2 gap-2">
-            <label className="text-sm">
-              <span className="texto-2">Desde</span>
-              <select className="campo mt-1" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
+          <Panel footer={cuentas.length < 2 ? 'Necesitas al menos dos cuentas. Créalas en Ajustes → Cuentas.' : undefined}>
+            <FieldRow>
+              <SelectField label="Desde" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
                 {cuentas.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.icono} {c.nombre}
                   </option>
                 ))}
-              </select>
-            </label>
-            <label className="text-sm">
-              <span className="texto-2">Hacia</span>
-              <select className="campo mt-1" value={destinoId} onChange={(e) => setDestinoId(e.target.value)}>
+              </SelectField>
+              <SelectField label="Hacia" value={destinoId} onChange={(e) => setDestinoId(e.target.value)}>
                 <option value="">Elige…</option>
                 {cuentas.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.icono} {c.nombre}
                   </option>
                 ))}
-              </select>
-            </label>
-            {cuentas.length < 2 && <p className="texto-2 col-span-2 text-sm">Necesitas al menos dos cuentas. Créalas en Ajustes → Cuentas.</p>}
-          </div>
+              </SelectField>
+            </FieldRow>
+          </Panel>
         )}
 
         {/* Categorías: un toque guarda */}
         {tipo !== 'transferencia' && (
-          <div>
-            <p className="texto-2 mb-1 text-xs">{existente ? 'Categoría' : 'Toca una categoría para guardar'}</p>
+          <Panel title={existente ? 'Categoría' : 'Toca una categoría para guardar'}>
             <div className="grid grid-cols-5 gap-1">
               {cats.map((c) => (
                 <button
                   key={c.id}
-                  className="flex flex-col items-center gap-1 rounded-xl py-1.5 active:scale-95"
-                  style={categoriaId === c.id ? { background: c.color + '26', outline: `2px solid ${c.color}` } : undefined}
+                  type="button"
+                  className={cx('flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-[16px] border px-0.5 py-1.5 transition active:scale-95', categoriaId === c.id ? 'border-brand bg-brand-soft' : 'border-border bg-surface')}
                   onClick={() => tocarCategoria(c.id)}
                 >
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full text-xl" style={{ background: c.color + '22' }}>
-                    {c.icono}
-                  </span>
-                  <span className="w-full truncate px-0.5 text-center text-[11px] leading-tight">{c.nombre}</span>
+                  <span className="text-[21px] leading-none">{c.icono}</span>
+                  <span className={cx('w-full truncate text-center text-[11px] leading-tight font-medium', categoriaId === c.id && 'text-brand')}>{c.nombre}</span>
                 </button>
               ))}
             </div>
-          </div>
+          </Panel>
         )}
 
         {/* Teclado */}
@@ -284,8 +276,8 @@ export function Editor() {
           {['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'borrar'].map((t) => (
             <button
               key={t}
-              className="importe flex h-12 items-center justify-center rounded-xl text-2xl font-medium active:scale-95"
-              style={{ background: 'var(--superficie-2)' }}
+              type="button"
+              className="num flex min-h-12 items-center justify-center rounded-2xl border border-border bg-surface text-[22px] font-medium transition active:scale-95 active:bg-surface-2"
               onClick={() => tecla(t)}
               aria-label={t === 'borrar' ? 'Borrar' : t}
             >
@@ -297,13 +289,13 @@ export function Editor() {
         {(existente || tipo === 'transferencia') && (
           <div className="flex gap-2">
             {existente && (
-              <button className="boton boton-secundario" style={{ color: 'var(--color-gasto)' }} onClick={eliminar} aria-label="Eliminar">
+              <Button variant="danger" className="px-4" onClick={eliminar} aria-label="Eliminar">
                 <IconoPapelera />
-              </button>
+              </Button>
             )}
-            <button className="boton boton-primario flex-1" onClick={() => guardar()} disabled={importe <= 0}>
+            <Button className="flex-1" onClick={() => guardar()} disabled={importe <= 0}>
               Guardar
-            </button>
+            </Button>
           </div>
         )}
       </div>

@@ -1,19 +1,29 @@
-import { useMemo } from 'react';
-import { addDays, parseISO } from 'date-fns';
+import { useMemo, useState } from 'react';
+import { FormCuenta, TIPOS_CUENTA } from './ajustes/Cuentas';
+import type { Cuenta } from '../domain/tipos';
+import { addDays, format, startOfISOWeek } from 'date-fns';
+import { TiraSemana } from '../components/TiraSemana';
+import { es } from 'date-fns/locale';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
-import { Anillo, type Porcion } from '../components/Anillo';
 import { FilaMovimiento } from '../components/FilaMovimiento';
-import { Barra } from '../components/Barra';
-import { IconoFuego } from '../components/Iconos';
-import { agruparPorDia, enPeriodo, progresoPresupuestos, racha, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
+import { IconoBajar, IconoFuego, IconoMas, IconoSubir } from '../components/Iconos';
+import { BrandHero, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
+import { agruparPorDia, enPeriodo, progresoPresupuestos, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
 import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
 import type { PropsPantalla } from './tipos';
+import { usarPagos } from './usarPagos';
+import { usarJuego } from './usarJuego';
+import { FilaPago } from './Pagos';
 
 export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: PropsPantalla) {
   const { movimientos, cuentas, todasCuentas, categoriaPorId, dinero, ajustes, abrirEditor } = useDatos();
+  const hoy = hoyISO();
+  const { pagos } = usarPagos(aISO(addDays(new Date(), -31)), aISO(addDays(new Date(), 7)));
+  const proximos = pagos.filter((p) => (p.fecha >= hoy && p.estado !== 'pagado') || p.estado === 'vencido').slice(0, 4);
+  const [cuentaAbierta, setCuentaAbierta] = useState<Cuenta | 'nueva' | null>(null);
   const presupuestos = useLiveQuery(() => db.presupuestos.toArray(), [], []);
 
   const movsPeriodo = useMemo(() => movimientos.filter((m) => enPeriodo(m, periodo)), [movimientos, periodo]);
@@ -38,190 +48,227 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
     [presupuestos, movsPeriodo],
   );
 
-  const porciones: Porcion[] = useMemo(
+  const porCategoria = useMemo(
     () =>
       [...totalesPorCategoria(movsPeriodo, 'gasto')]
         .map(([id, valor]) => {
           const c = categoriaPorId.get(id);
-          return { id, valor, nombre: c?.nombre ?? 'Sin categoría', color: c?.color ?? '#94a3b8', icono: c?.icono ?? '❔' };
+          return { id, valor, nombre: c?.nombre ?? 'Sin categoría', icono: c?.icono ?? '❔' };
         })
         .sort((a, b) => b.valor - a.valor),
     [movsPeriodo, categoriaPorId],
   );
 
-  // Racha: días seguidos en los que has apuntado algo (los recurrentes automáticos no cuentan)
-  const nRacha = useMemo(() => {
-    const dias = new Set(movimientos.filter((m) => !m.recurrenteId).map((m) => aISO(new Date(m.creadoEn))));
-    return racha(dias, hoyISO(), (d) => aISO(addDays(parseISO(d), -1)));
-  }, [movimientos]);
-
+  const juego = usarJuego();
+  const reto = juego.retos.find((r) => !r.completado);
   const grupos = agruparPorDia(movsPeriodo).slice(0, 5);
+  const lunes = aISO(startOfISOWeek(new Date()));
+  const diasConMovs = useMemo(() => new Set(movimientos.filter((m) => m.fecha >= lunes).map((m) => m.fecha)), [movimientos, lunes]);
+  const movsSemana = movimientos.filter((m) => m.fecha >= lunes && m.fecha <= hoy).length;
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-4">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Finace</h1>
-        {nRacha > 0 && (
-          <span className="flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold text-orange-600 dark:text-orange-400" style={{ background: 'var(--superficie)' }} title="Días seguidos apuntando movimientos">
-            <IconoFuego width={16} height={16} /> {nRacha} {nRacha === 1 ? 'día' : 'días'}
-          </span>
-        )}
-      </header>
-
-      <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={setDesplazamiento} diaInicio={ajustes.diaInicioMes} />
-
-      {/* Resumen */}
-      <section className="tarjeta p-5">
-        <p className="texto-2 text-sm">Balance del mes</p>
-        <p className="importe text-4xl font-bold" style={{ color: r.balance < 0 ? 'var(--color-gasto)' : undefined }} data-testid="balance">
-          {dinero(r.balance)}
-        </p>
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl p-3" style={{ background: 'var(--superficie-2)' }}>
-            <p className="texto-2 text-xs">Ingresos</p>
-            <p className="importe text-lg font-semibold" style={{ color: 'var(--color-ingreso)' }}>
-              {dinero(r.ingresos, { signo: true })}
-            </p>
-          </div>
-          <div className="rounded-2xl p-3" style={{ background: 'var(--superficie-2)' }}>
-            <p className="texto-2 text-xs">Gastos</p>
-            <p className="importe text-lg font-semibold" style={{ color: 'var(--color-gasto)' }} data-testid="gastos">
-              {dinero(-r.gastos)}
-            </p>
-          </div>
-        </div>
-        {esActual && dias > 0 && (r.ingresos > 0 || global) && (
-          <p className="mt-4 text-sm">
-            {disponible > 0 ? (
-              <>
-                Te quedan <b className="importe">{dinero(disponible)}</b>
-                {global ? ' de presupuesto' : ''} para {dias} {dias === 1 ? 'día' : 'días'}: unos <b className="importe">{dinero(porDia)}</b> al día.
-              </>
-            ) : (
-              <span style={{ color: 'var(--color-gasto)' }}>
-                {global ? 'Has superado tu presupuesto' : 'Estás gastando más de lo que ingresas'} en {dinero(-disponible)}.
+    <>
+      <PageHeader title="Hoy" subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>} />
+      <Page>
+        <button type="button" className="block w-full text-left transition active:scale-[0.99]" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
+          <BrandHero name="Finace">
+            <span className="flex flex-wrap items-center gap-x-2">
+              <span>
+                Nivel {juego.nivel} · {juego.nombre}
               </span>
-            )}
+              <span className="num inline-flex items-center gap-0.5 font-semibold text-warning">
+                <IconoFuego width={14} height={14} /> {juego.racha} {juego.racha === 1 ? 'día' : 'días'}
+              </span>
+            </span>
+          </BrandHero>
+        </button>
+        <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={setDesplazamiento} diaInicio={ajustes.diaInicioMes} />
+
+        {/* Resumen: la tarjeta negra de la pantalla */}
+        <Card dark>
+          <p className="text-[13px] text-white/60">Balance del mes</p>
+          <p className="num mt-1 text-[34px] leading-tight font-semibold" data-testid="balance">
+            {dinero(r.balance)}
           </p>
-        )}
-        {global && <div className="mt-2"><Barra porcentaje={global.importe ? r.gastos / global.importe : 0} /></div>}
-      </section>
-
-      {movimientos.length === 0 && (
-        <section className="tarjeta p-6 text-center">
-          <p className="text-4xl">👋</p>
-          <p className="mt-2 font-semibold">Apunta tu primer gasto</p>
-          <p className="texto-2 mt-1 text-sm">Pulsa el botón + de abajo, escribe el importe y toca una categoría. Así de rápido.</p>
-          <button className="boton boton-primario mt-4" onClick={() => abrirEditor()}>
-            Añadir gasto
-          </button>
-        </section>
-      )}
-
-      {/* Presupuestos */}
-      {progreso.length > 0 && (
-        <section className="tarjeta p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-semibold">Presupuestos</h2>
-            <button className="text-sm text-[var(--color-marca)]" onClick={() => ir('estadisticas')}>
-              Ver todos
-            </button>
+          <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
+            <div>
+              <p className="flex items-center gap-1 text-[13px] text-white/60">
+                <IconoSubir width={14} height={14} /> Ingresos
+              </p>
+              <p className="num mt-0.5 text-[20px] font-semibold">{dinero(r.ingresos, { signo: true })}</p>
+            </div>
+            <div>
+              <p className="flex items-center gap-1 text-[13px] text-white/60">
+                <IconoBajar width={14} height={14} /> Gastos
+              </p>
+              <p className="num mt-0.5 text-[20px] font-semibold" data-testid="gastos">
+                {dinero(-r.gastos)}
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col gap-3">
+          {esActual && dias > 0 && (r.ingresos > 0 || global) && (
+            <p className="mt-4 text-[14px] text-white/80">
+              {disponible > 0 ? (
+                <>
+                  Te quedan <b className="num text-white">{dinero(disponible)}</b>
+                  {global ? ' de presupuesto' : ''} para {dias} {dias === 1 ? 'día' : 'días'}: unos <b className="num text-white">{dinero(porDia)}</b> al día.
+                </>
+              ) : (
+                <span className="font-medium text-danger">
+                  {global ? 'Has superado tu presupuesto' : 'Estás gastando más de lo que ingresas'} en {dinero(-disponible)}.
+                </span>
+              )}
+            </p>
+          )}
+          {global && (
+            <div className="mt-3">
+              <ProgressBar value={global.importe ? r.gastos / global.importe : 0} tone={tonoPresupuesto(global.importe ? r.gastos / global.importe : 0)} />
+            </div>
+          )}
+        </Card>
+
+        {/* Nivel y reto semanal */}
+        {movimientos.length > 0 && esActual && (
+          <button type="button" className="block w-full rounded-[26px] border border-border bg-surface p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition active:scale-[0.99]" onClick={() => ir('logros')}>
+            <span className="flex items-center gap-3">
+              <Emoji>{reto ? reto.icono : '🏆'}</Emoji>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[13px] text-muted">{reto ? 'Reto de la semana' : `Nivel ${juego.nivel} · ${juego.nombre}`}</span>
+                <span className="block truncate text-[15px] font-medium">{reto ? reto.nombre : '¡Retos de la semana completados!'}</span>
+              </span>
+              <Chip tone="brand" className="num">
+                {reto ? `+${reto.xp} XP` : `${juego.xpEnNivel}/${juego.xpParaSubir}`}
+              </Chip>
+            </span>
+            <span className="mt-3 flex items-center gap-3">
+              <span className="flex-1">
+                <ProgressBar value={reto ? reto.actual / reto.meta : juego.progreso} />
+              </span>
+              {reto && (
+                <span className="num text-[12px] text-muted">
+                  {reto.actual}/{reto.meta}
+                </span>
+              )}
+            </span>
+          </button>
+        )}
+
+        {esActual && <TiraSemana hoy={hoy} ocupados={diasConMovs} detalle={`${movsSemana} ${movsSemana === 1 ? 'movimiento' : 'movimientos'} esta semana`} />}
+
+        {movimientos.length === 0 && (
+          <EmptyState icon="👋" title="Apunta tu primer gasto">
+            <p>Pulsa el botón + de abajo, escribe el importe y toca una categoría. Así de rápido.</p>
+            <Button className="mx-auto mt-4" onClick={() => abrirEditor()}>
+              Añadir gasto
+            </Button>
+          </EmptyState>
+        )}
+
+        {/* Presupuestos */}
+        {progreso.length > 0 && (
+          <Panel title="Presupuestos" detail={<PanelLink onClick={() => ir('estadisticas')}>Ver todos</PanelLink>}>
             {progreso.map((p) => {
               const c = categoriaPorId.get(p.presupuesto.categoriaId!);
               return (
-                <div key={p.presupuesto.id}>
-                  <div className="mb-1 flex justify-between text-sm">
-                    <span>
-                      {c?.icono} {c?.nombre}
-                    </span>
-                    <span className="importe texto-2">
+                <Tile key={p.presupuesto.id} className="flex-col items-stretch gap-2">
+                  <span className="flex items-center gap-3">
+                    <Emoji>{c?.icono}</Emoji>
+                    <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c?.nombre}</span>
+                    <span className="num text-[13px] text-muted">
                       {dinero(p.gastado, { sinDecimales: true })} / {dinero(p.presupuesto.importe, { sinDecimales: true })}
                     </span>
-                  </div>
-                  <Barra porcentaje={p.porcentaje} />
-                </div>
+                  </span>
+                  <ProgressBar value={p.porcentaje} tone={tonoPresupuesto(p.porcentaje)} />
+                </Tile>
               );
             })}
-          </div>
-        </section>
-      )}
+          </Panel>
+        )}
 
-      {/* Gastos por categoría */}
-      {porciones.length > 0 && (
-        <section className="tarjeta p-4">
-          <h2 className="mb-2 font-semibold">¿En qué gasto?</h2>
-          <Anillo
-            datos={porciones}
-            onTocar={(id) => ir('movimientos', { categoriaId: id, periodo: true })}
-            centro={
-              <>
-                <span className="texto-2 text-xs">Gastado</span>
-                <span className="importe text-xl font-bold">{dinero(r.gastos, { sinDecimales: r.gastos >= 100000 })}</span>
-              </>
-            }
-          />
-          <ul className="mt-3 flex flex-col">
-            {porciones.slice(0, 6).map((p) => (
-              <li key={p.id}>
-                <button className="flex w-full items-center gap-3 py-1.5 text-left" onClick={() => ir('movimientos', { categoriaId: p.id, periodo: true })}>
-                  <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: p.color }} />
-                  <span className="flex-1 truncate text-sm">
-                    {categoriaPorId.get(p.id)?.icono} {p.nombre}
-                  </span>
-                  <span className="texto-2 text-xs">{Math.round((p.valor / r.gastos) * 100)} %</span>
-                  <span className="importe w-24 text-right text-sm font-medium">{dinero(p.valor)}</span>
-                </button>
-              </li>
+        {/* Próximos pagos */}
+        {proximos.length > 0 && esActual && (
+          <Panel title="Próximos pagos" detail={<PanelLink onClick={() => ir('pagos')}>Ver calendario</PanelLink>}>
+            {proximos.map((p) => (
+              <FilaPago key={p.clave} p={p} mostrarFecha onEditar={() => ir('pagos')} />
             ))}
-          </ul>
-        </section>
-      )}
+          </Panel>
+        )}
 
-      {/* Cuentas */}
-      {cuentas.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-baseline justify-between px-1">
-            <h2 className="font-semibold">Cuentas</h2>
-            <span className="importe texto-2 text-sm">Total {dinero(patrimonio)}</span>
-          </div>
-          <div className="sin-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4">
-            {cuentas.map((c) => (
-              <button key={c.id} className="tarjeta min-w-36 shrink-0 p-3 text-left" onClick={() => ir('movimientos', { cuentaId: c.id })}>
-                <span className="text-xl">{c.icono}</span>
-                <p className="texto-2 mt-1 truncate text-sm">{c.nombre}</p>
-                <p className="importe font-semibold" style={{ color: (saldos.get(c.id) ?? 0) < 0 ? 'var(--color-gasto)' : undefined }}>
-                  {dinero(saldos.get(c.id) ?? 0)}
-                </p>
+        {/* Gastos por categoría: barras de un solo color */}
+        {porCategoria.length > 0 && (
+          <Panel title="¿En qué gasto?" detail={<span className="num">{dinero(r.gastos)}</span>}>
+            {porCategoria.slice(0, 6).map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className="flex w-full flex-col gap-2 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+                onClick={() => ir('movimientos', { categoriaId: p.id, periodo: true })}
+              >
+                <span className="flex w-full items-center gap-3">
+                  <Emoji>{p.icono}</Emoji>
+                  <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{p.nombre}</span>
+                  <span className="num text-[12px] text-muted">{Math.round((p.valor / r.gastos) * 100)} %</span>
+                  <span className="num text-[15px] font-semibold">{dinero(p.valor)}</span>
+                </span>
+                <ProgressBar value={p.valor / porCategoria[0].valor} />
               </button>
             ))}
-          </div>
-        </section>
-      )}
+          </Panel>
+        )}
 
-      {/* Últimos movimientos */}
-      {grupos.length > 0 && (
-        <section className="tarjeta overflow-hidden py-2">
-          <div className="flex items-center justify-between px-4 py-2">
-            <h2 className="font-semibold">Últimos movimientos</h2>
-            <button className="text-sm text-[var(--color-marca)]" onClick={() => ir('movimientos', { periodo: true })}>
-              Ver todos
-            </button>
-          </div>
-          {grupos.map((g) => (
-            <div key={g.fecha}>
-              <div className="texto-2 flex justify-between px-4 pt-2 text-xs font-medium">
-                <span>{fechaLarga(g.fecha)}</span>
-                <span className="importe">{dinero(g.neto, { signo: true })}</span>
+        {/* Cuentas */}
+        <Panel title="Mis cuentas" detail={<span className="num">Total {dinero(patrimonio)}</span>} footer="Toca una cuenta para actualizar su saldo.">
+          {cuentas.map((c) => {
+            const saldo = saldos.get(c.id) ?? 0;
+            return (
+              <TileButton
+                key={c.id}
+                icon={<Emoji>{c.icono}</Emoji>}
+                title={c.nombre}
+                subtitle={TIPOS_CUENTA.find((t) => t[0] === c.tipo)?.[1]}
+                detail={<span className={cx('num text-[15px] font-semibold', saldo < 0 ? 'text-danger' : 'text-text')}>{dinero(saldo)}</span>}
+                chevron
+                onClick={() => setCuentaAbierta(c)}
+                aria-label={`${c.nombre}: actualizar saldo`}
+              />
+            );
+          })}
+          <TileButton
+            icon={
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                <IconoMas width={20} height={20} />
+              </span>
+            }
+            title={<span className="text-brand">Añadir banco</span>}
+            onClick={() => setCuentaAbierta('nueva')}
+          />
+        </Panel>
+        {cuentaAbierta && <FormCuenta cuenta={cuentaAbierta === 'nueva' ? undefined : cuentaAbierta} onCerrar={() => setCuentaAbierta(null)} />}
+
+        {/* Últimos movimientos */}
+        {grupos.length > 0 && (
+          <Panel title="Últimos movimientos" detail={<PanelLink onClick={() => ir('movimientos', { periodo: true })}>Ver todos</PanelLink>}>
+            {grupos.map((g) => (
+              <div key={g.fecha} className="space-y-1.5">
+                <div className="flex justify-between px-3 pt-1.5 text-[12px] font-medium text-muted">
+                  <span className="first-letter:uppercase">{fechaLarga(g.fecha)}</span>
+                  <span className="num">{dinero(g.neto, { signo: true })}</span>
+                </div>
+                {g.items.map((m) => (
+                  <FilaMovimiento key={m.id} m={m} />
+                ))}
               </div>
-              {g.items.map((m) => (
-                <FilaMovimiento key={m.id} m={m} />
-              ))}
-            </div>
-          ))}
-        </section>
-      )}
-    </div>
+            ))}
+          </Panel>
+        )}
+
+        {!esActual && movsPeriodo.length === 0 && movimientos.length > 0 && (
+          <Card className="text-center">
+            <CardTitle>Sin movimientos</CardTitle>
+            <Label>No apuntaste nada en este mes.</Label>
+          </Card>
+        )}
+      </Page>
+    </>
   );
 }

@@ -14,10 +14,22 @@ const capturas = process.argv[2];
   p.on('console', (m) => m.type() === 'error' && errores.push(m.text()));
   const foto = async (n) => capturas && p.screenshot({ path: `${capturas}/${n}.png`, fullPage: true });
 
+  // Las celebraciones de logros tapan la pantalla: se cierran solas durante la prueba
+  let premios = 0;
+  await p.addLocatorHandler(p.getByRole('button', { name: '¡Genial!' }), async () => {
+    premios++;
+    // Puede desaparecer sola (p. ej. al restaurar una copia): no esperar indefinidamente
+    await p.getByRole('button', { name: '¡Genial!' }).click({ timeout: 2000 }).catch(() => {});
+  }, { noWaitAfter: true });
   await p.goto(URL_APP);
   // Bienvenida
   await p.getByRole('button', { name: 'Empezar' }).click();
-  await p.locator('input[placeholder="Saldo"]').first().fill('1500');
+  await p.getByRole('button', { name: '+ BBVA' }).click();
+  await p.getByRole('button', { name: '+ Revolut' }).click();
+  await p.getByPlaceholder('Otro banco o cuenta').fill('Hucha');
+  await p.getByRole('button', { name: 'Añadir', exact: true }).click();
+  await p.locator('input[placeholder="Saldo"]').nth(1).fill('1500');
+  await p.locator('input[placeholder="Saldo"]').nth(2).fill('320,50');
   await foto('01-bienvenida');
   await p.getByRole('button', { name: '¡Listo!' }).click();
   await p.getByText('Apunta tu primer gasto').waitFor();
@@ -71,6 +83,13 @@ const capturas = process.argv[2];
   await p.getByText('Restaurado').waitFor();
   assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /64,50/);
 
+  // Gamificación: el primer gasto desbloquea «Primer paso» y hay nivel y XP
+  await p.getByRole('button', { name: /Ver logros/ }).first().click();
+  await p.getByText('Retos de esta semana').waitFor();
+  assert.strictEqual(await p.locator('[data-logro="primer-paso"]').getAttribute('data-desbloqueado'), 'true');
+  assert.ok(premios >= 1, 'se celebró al menos una insignia');
+  await foto('11-logros');
+
   // Movimientos
   await p.getByRole('button', { name: 'Movimientos', exact: true }).click();
   await p.getByPlaceholder(/Buscar/).fill('mercadona');
@@ -90,15 +109,15 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Definir' }).click();
   await p.locator('input[inputmode=decimal]').fill('800');
   await p.getByRole('button', { name: 'Guardar' }).click();
-  await p.getByRole('button', { name: 'Inicio' }).click();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
   await p.getByText(/de presupuesto para/).waitFor();
 
   // Recurrente mensual que empezó hace 2 meses → genera 3
   await p.getByRole('button', { name: 'Ajustes' }).click();
   await p.getByRole('button', { name: /Recurrentes/ }).click();
   await p.getByRole('button', { name: '+ Nuevo recurrente' }).click();
-  await p.getByPlaceholder(/Nombre/).fill('Netflix');
-  await p.getByPlaceholder('Importe').fill('12,99');
+  await p.getByLabel('Nombre').fill('Netflix');
+  await p.getByLabel('Importe').fill('12,99');
   await p.locator('select').first().selectOption({ label: '📺 Suscripciones' });
   const d = new Date();
   d.setMonth(d.getMonth() - 2);
@@ -106,8 +125,33 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Guardar' }).click();
   await p.getByText(/3 movimientos añadidos/).waitFor();
 
+  // Calendario de pagos: Netflix (automático) aparece como pagado; añadir un recordatorio
+  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  await p.getByText('Pagos fijos este mes').waitFor();
+  await p.locator('section', { hasText: 'Este mes' }).getByText('Pagado', { exact: true }).first().waitFor();
+  await p.getByRole('button', { name: /Añadir suscripción o pago/ }).click();
+  await p.getByLabel('Nombre').fill('Gimnasio');
+  await p.getByLabel('Importe').fill('35');
+  await p.locator('select').first().selectOption({ label: '🎬 Ocio' });
+  const dentro2 = new Date(Date.now() + 2 * 86400000);
+  const iso2 = `${dentro2.getFullYear()}-${String(dentro2.getMonth() + 1).padStart(2, '0')}-${String(dentro2.getDate()).padStart(2, '0')}`;
+  await p.locator('input[type=date]').fill(iso2);
+  await p.getByRole('switch', { name: 'Apuntarlo automáticamente' }).click();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
+  await p.getByText('Próximos pagos').waitFor();
+  const gastosAntes = await p.getByTestId('gastos').innerText();
+  await p.locator('section', { hasText: 'Próximos pagos' }).getByRole('button', { name: /Marcar pagado/ }).click();
+  await p.getByText(/Gimnasio marcado como pagado/).waitFor();
+  assert.notStrictEqual(await p.getByTestId('gastos').innerText(), gastosAntes, 'marcar pagado apunta el gasto');
+  await p.getByRole('button', { name: 'Deshacer' }).click();
+  await p.waitForTimeout(300);
+  assert.strictEqual(await p.getByTestId('gastos').innerText(), gastosAntes);
+  await p.getByRole('button', { name: 'Pagos', exact: true }).click();
+  await foto('10-pagos');
+  await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
+
   // Copia de seguridad: exportar, borrar todo, restaurar
-  await p.getByRole('button', { name: /Ajustes/ }).first().click();
   const [descarga] = await Promise.all([p.waitForEvent('download'), p.getByRole('button', { name: /Crear copia/ }).click()]);
   const ruta = await descarga.path();
   p.on('dialog', (dl) => dl.accept());
@@ -118,9 +162,24 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: '¡Listo!' }).click();
   await p.getByRole('button', { name: 'Ajustes' }).click();
   await p.locator('input[type=file]').setInputFiles(ruta);
-  await p.getByText('Copia restaurada').waitFor();
-  await p.getByRole('button', { name: 'Inicio' }).click();
+  // El aviso dura 2,5 s y las celebraciones de logros pueden taparlo: se comprueba el dato restaurado
+  await p.getByRole('button', { name: /Cuentas/ }).filter({ hasText: '4' }).waitFor();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
+  await p.getByTestId('gastos').filter({ hasText: '77,49' }).waitFor();
+
+  // Actualizar el saldo de un banco desde el inicio (no debe contar como gasto)
+  await p.getByRole('button', { name: 'Revolut: actualizar saldo' }).click();
+  await p.locator('input[inputmode=decimal]').fill('300');
+  await p.getByText(/No cuenta como gasto/).waitFor();
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByText(/Revolut: saldo 300,00/).waitFor();
   assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /77,49/);
+  await p.getByRole('button', { name: 'Añadir banco' }).click();
+  await p.getByRole('button', { name: 'Openbank' }).click();
+  await p.locator('input[inputmode=decimal]').fill('1000');
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByRole('button', { name: 'Openbank: actualizar saldo' }).waitFor();
+  await foto('09-cuentas');
 
   // Modo oscuro
   await p.emulateMedia({ colorScheme: 'dark' });
