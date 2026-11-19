@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { eachDayOfInterval, getISODay, parseISO } from 'date-fns';
+import { addDays, eachDayOfInterval, getISODay, parseISO } from 'date-fns';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { FormRecurrente } from './ajustes/Recurrentes';
@@ -12,13 +12,13 @@ import { Button, Card, CardTitle, Chip, Emoji, HeaderButton, Label, Page, PageHe
 
 const ESTADO: Record<Pago['estado'], { texto: string; tono: TonoChip }> = {
   pagado: { texto: 'Pagado', tono: 'success' },
-  hoy: { texto: 'Hoy', tono: 'warning' },
-  pendiente: { texto: 'Pendiente', tono: 'neutral' },
+  hoy: { texto: 'Hoy', tono: 'brand' },
+  pendiente: { texto: 'Pendiente', tono: 'warning' },
   vencido: { texto: 'Sin pagar', tono: 'danger' },
 };
 
 export function Pagos() {
-  const { dinero, categoriaPorId } = useDatos();
+  const { dinero } = useDatos();
   const [desplazamiento, setDesplazamiento] = useState(0);
   const [diaSel, setDiaSel] = useState<string>();
   const [form, setForm] = useState<{ r?: Recurrente; inicio?: string } | null>(null);
@@ -37,6 +37,10 @@ export function Pagos() {
     for (const p of pagos) m.set(p.fecha, [...(m.get(p.fecha) ?? []), p]);
     return m;
   }, [pagos]);
+  const primero = parseISO(dias[0]);
+  const ultimo = parseISO(dias[dias.length - 1]);
+  const antes = Array.from({ length: getISODay(primero) - 1 }, (_, i) => aISO(addDays(primero, i - (getISODay(primero) - 1))));
+  const despues = Array.from({ length: 7 - getISODay(ultimo) }, (_, i) => aISO(addDays(ultimo, i + 1)));
   const visibles = diaSel ? porDia.get(diaSel) ?? [] : pagos;
 
   return (
@@ -91,9 +95,11 @@ export function Pagos() {
               <span key={d}>{d}</span>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: getISODay(parseISO(dias[0])) - 1 }, (_, i) => (
-              <span key={'v' + i} />
+          <div className="grid grid-cols-7 gap-y-1 text-center">
+            {antes.map((d) => (
+              <span key={d} className="num flex min-h-12 items-start justify-center pt-2.5 text-[15px] text-muted/50" aria-hidden="true">
+                {parseISO(d).getDate()}
+              </span>
             ))}
             {dias.map((d) => {
               const ps = porDia.get(d) ?? [];
@@ -105,29 +111,35 @@ export function Pagos() {
                   key={d}
                   type="button"
                   className={cx(
-                    'flex min-h-14 flex-col items-center gap-0.5 rounded-2xl pt-1.5 transition active:scale-95',
-                    elegido ? 'bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)]' : ps.length ? (vencido ? 'bg-danger-soft' : todoPagado ? 'bg-success-soft' : 'bg-brand-soft') : 'bg-surface-2',
-                    d === hoy && !elegido && 'ring-1 ring-brand',
+                    'mx-auto flex min-h-12 w-11 flex-col items-center gap-1 rounded-2xl pt-2.5 transition active:scale-95',
+                    elegido && 'bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)]',
+                    !elegido && d === hoy && 'text-brand ring-1 ring-brand',
                   )}
                   onClick={() => setDiaSel(elegido ? undefined : d)}
                   aria-label={`${fechaLarga(d)}: ${ps.length} pagos`}
                   aria-pressed={elegido}
                 >
-                  <span className={cx('num text-[14px]', d === hoy ? 'font-bold' : 'font-medium')}>{parseISO(d).getDate()}</span>
-                  <span className="flex flex-wrap justify-center text-[13px] leading-none">
-                    {ps.slice(0, 2).map((p) => (
-                      <span key={p.clave}>{(p.recurrente.categoriaId && categoriaPorId.get(p.recurrente.categoriaId)?.icono) || '🔁'}</span>
-                    ))}
-                    {ps.length > 2 && <span className={cx('text-[10px]', elegido ? 'text-on-brand/80' : 'text-muted')}>+{ps.length - 2}</span>}
-                  </span>
+                  <span className={cx('num text-[15px] leading-none', d === hoy || elegido ? 'font-semibold' : 'font-medium')}>{parseISO(d).getDate()}</span>
+                  <span className={cx('size-1.5 rounded-full', !ps.length ? 'bg-transparent' : elegido ? 'bg-on-brand' : vencido ? 'bg-danger' : todoPagado ? 'bg-success' : 'bg-accent')} />
                 </button>
               );
             })}
+            {despues.map((d) => (
+              <span key={d} className="num flex min-h-12 items-start justify-center pt-2.5 text-[15px] text-muted/50" aria-hidden="true">
+                {parseISO(d).getDate()}
+              </span>
+            ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
-            <Chip tone="success">Pagado</Chip>
-            <Chip tone="brand">Pendiente</Chip>
-            <Chip tone="danger">Sin pagar</Chip>
+            <Chip tone="success">
+              <span className="size-1.5 rounded-full bg-success" /> Pagado
+            </Chip>
+            <Chip tone="warning">
+              <span className="size-1.5 rounded-full bg-accent" /> Pendiente
+            </Chip>
+            <Chip tone="danger">
+              <span className="size-1.5 rounded-full bg-danger" /> Sin pagar
+            </Chip>
           </div>
         </Card>
 

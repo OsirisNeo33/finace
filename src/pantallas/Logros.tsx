@@ -10,7 +10,7 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
 
   return (
     <>
-      <PageHeader title="Logros" subtitle="Tu constancia apuntando gastos, en puntos" back={{ label: 'Inicio', onClick: onVolver }} />
+      <PageHeader title="Logros" subtitle="Tu constancia apuntando gastos, en puntos" back={{ label: 'Hoy', onClick: onVolver }} />
       <Page>
         {/* Nivel: la tarjeta negra de la pantalla */}
         <Card dark>

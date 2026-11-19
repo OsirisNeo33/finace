@@ -40,3 +40,40 @@ export const IconoCalendario = base(
   </>,
 );
 export const IconoTrofeo = base(<path d="M8 4.5h8v5a4 4 0 0 1-8 0zM8 6.5H4.5v1.5A3 3 0 0 0 8 11M16 6.5h3.5v1.5A3 3 0 0 1 16 11M12 13.5V17M8.5 20.5h7M9.5 17h5v3.5h-5z" />);
+export const IconoEdificio = base(
+  <>
+    <path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M2.5 21h19" />
+    <path d="M8 7h4M8 11h4M8 15h4" />
+  </>,
+);
+export const IconoEtiqueta = base(
+  <>
+    <path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.5 1.5 0 0 1 0 2.1l-6.1 6.1a1.5 1.5 0 0 1-2.1 0z" />
+    <circle cx="8" cy="8" r="1.4" />
+  </>,
+);
+export const IconoDiana = base(
+  <>
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4.5" />
+    <circle cx="12" cy="12" r="0.8" fill="currentColor" />
+  </>,
+);
+export const IconoRepetir = base(<path d="M20 11A8 8 0 0 0 5.6 6.4L3.5 8.5M3.5 3.5v5h5M4 13a8 8 0 0 0 14.4 4.6l2.1-2.1M20.5 20.5v-5h-5" />);
+export const IconoDescargar = base(<path d="M12 4v11M7 10.5l5 5 5-5M4.5 19.5h15" />);
+export const IconoCompartir = base(<path d="M12 15V3M8 7l4-4 4 4M7.5 10.5H6A2 2 0 0 0 4 12.5v7A2 2 0 0 0 6 21.5h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1.5" />);
+export const IconoSubir = base(<path d="M12 19V5M6 11l6-6 6 6" />);
+export const IconoBajar = base(<path d="M12 5v14M6 13l6 6 6-6" />);
+export const IconoMovil = base(
+  <>
+    <rect x="6.5" y="2" width="11" height="20" rx="2.5" />
+    <path d="M11 18.5h2" />
+  </>,
+);
+export const IconoMoneda = base(<path d="M17.5 6.5A6.5 6.5 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9" />);
+export const IconoHoy = base(
+  <>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+  </>,
+);

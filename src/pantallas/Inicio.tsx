@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { FormCuenta, TIPOS_CUENTA } from './ajustes/Cuentas';
 import type { Cuenta } from '../domain/tipos';
-import { addDays, format } from 'date-fns';
+import { addDays, format, startOfISOWeek } from 'date-fns';
+import { TiraSemana } from '../components/TiraSemana';
 import { es } from 'date-fns/locale';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { FilaMovimiento } from '../components/FilaMovimiento';
-import { IconoFuego, IconoMas } from '../components/Iconos';
-import { Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
+import { IconoBajar, IconoFuego, IconoMas, IconoSubir } from '../components/Iconos';
+import { BrandHero, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
 import { agruparPorDia, enPeriodo, progresoPresupuestos, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
 import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -61,24 +62,26 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
   const juego = usarJuego();
   const reto = juego.retos.find((r) => !r.completado);
   const grupos = agruparPorDia(movsPeriodo).slice(0, 5);
+  const lunes = aISO(startOfISOWeek(new Date()));
+  const diasConMovs = useMemo(() => new Set(movimientos.filter((m) => m.fecha >= lunes).map((m) => m.fecha)), [movimientos, lunes]);
+  const movsSemana = movimientos.filter((m) => m.fecha >= lunes && m.fecha <= hoy).length;
 
   return (
     <>
-      <PageHeader
-        title="Finace"
-        subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>}
-        action={
-          <button type="button" className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-surface py-1 pr-3 pl-1.5 shadow-sm active:scale-95" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
-            <Chip tone="brand" className="num">
-              Nv {juego.nivel}
-            </Chip>
-            <span className="num flex items-center gap-0.5 text-[13px] font-semibold text-warning">
-              <IconoFuego width={16} height={16} /> {juego.racha}
-            </span>
-          </button>
-        }
-      />
+      <PageHeader title="Hoy" subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>} />
       <Page>
+        <button type="button" className="block w-full text-left transition active:scale-[0.99]" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
+          <BrandHero name="Finace">
+            <span className="flex flex-wrap items-center gap-x-2">
+              <span>
+                Nivel {juego.nivel} · {juego.nombre}
+              </span>
+              <span className="num inline-flex items-center gap-0.5 font-semibold text-warning">
+                <IconoFuego width={14} height={14} /> {juego.racha} {juego.racha === 1 ? 'día' : 'días'}
+              </span>
+            </span>
+          </BrandHero>
+        </button>
         <SelectorPeriodo periodo={periodo} desplazamiento={desplazamiento} setDesplazamiento={setDesplazamiento} diaInicio={ajustes.diaInicioMes} />
 
         {/* Resumen: la tarjeta negra de la pantalla */}
@@ -89,11 +92,15 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
           </p>
           <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
             <div>
-              <p className="text-[13px] text-white/60">Ingresos</p>
+              <p className="flex items-center gap-1 text-[13px] text-white/60">
+                <IconoSubir width={14} height={14} /> Ingresos
+              </p>
               <p className="num mt-0.5 text-[20px] font-semibold">{dinero(r.ingresos, { signo: true })}</p>
             </div>
             <div>
-              <p className="text-[13px] text-white/60">Gastos</p>
+              <p className="flex items-center gap-1 text-[13px] text-white/60">
+                <IconoBajar width={14} height={14} /> Gastos
+              </p>
               <p className="num mt-0.5 text-[20px] font-semibold" data-testid="gastos">
                 {dinero(-r.gastos)}
               </p>
@@ -145,6 +152,8 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
             </span>
           </button>
         )}
+
+        {esActual && <TiraSemana hoy={hoy} ocupados={diasConMovs} detalle={`${movsSemana} ${movsSemana === 1 ? 'movimiento' : 'movimientos'} esta semana`} />}
 
         {movimientos.length === 0 && (
           <EmptyState icon="👋" title="Apunta tu primer gasto">

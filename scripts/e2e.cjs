@@ -109,7 +109,7 @@ const capturas = process.argv[2];
   await p.getByRole('button', { name: 'Definir' }).click();
   await p.locator('input[inputmode=decimal]').fill('800');
   await p.getByRole('button', { name: 'Guardar' }).click();
-  await p.getByRole('button', { name: 'Inicio' }).click();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
   await p.getByText(/de presupuesto para/).waitFor();
 
   // Recurrente mensual que empezó hace 2 meses → genera 3
@@ -138,7 +138,7 @@ const capturas = process.argv[2];
   await p.locator('input[type=date]').fill(iso2);
   await p.getByRole('switch', { name: 'Apuntarlo automáticamente' }).click();
   await p.getByRole('button', { name: 'Guardar' }).click();
-  await p.getByRole('button', { name: 'Inicio', exact: true }).click();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
   await p.getByText('Próximos pagos').waitFor();
   const gastosAntes = await p.getByTestId('gastos').innerText();
   await p.locator('section', { hasText: 'Próximos pagos' }).getByRole('button', { name: /Marcar pagado/ }).click();
@@ -164,7 +164,7 @@ const capturas = process.argv[2];
   await p.locator('input[type=file]').setInputFiles(ruta);
   // El aviso dura 2,5 s y las celebraciones de logros pueden taparlo: se comprueba el dato restaurado
   await p.getByRole('button', { name: /Cuentas/ }).filter({ hasText: '4' }).waitFor();
-  await p.getByRole('button', { name: 'Inicio' }).click();
+  await p.getByRole('button', { name: 'Hoy', exact: true }).click();
   await p.getByTestId('gastos').filter({ hasText: '77,49' }).waitFor();
 
   // Actualizar el saldo de un banco desde el inicio (no debe contar como gasto)

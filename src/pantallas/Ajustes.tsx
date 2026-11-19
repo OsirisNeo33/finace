@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDatos } from '../contexto';
-import { Button, Emoji, Page, PageHeader, Panel, Segmented, SelectField, Tile, TileButton } from '../components/ui';
+import { IconoCompartir, IconoDescargar, IconoDiana, IconoEdificio, IconoEtiqueta, IconoMovil, IconoRepetir, IconoTrofeo } from '../components/Iconos';
+import { Button, IconBadge, Page, PageHeader, Panel, Segmented, SelectField, Tile, TileButton } from '../components/ui';
 import { guardarAjustes, exportarCSV, exportarJSON, importarJSON, borrarTodo, descargar } from '../db/acciones';
 import { hoyISO } from '../domain/fechas';
 import { Cuentas } from './ajustes/Cuentas';
@@ -80,11 +81,11 @@ export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
       <PageHeader title="Ajustes" subtitle="Organización, preferencias y tus datos" />
       <Page>
         <Panel title="Organización">
-          <TileButton icon={<Emoji>🏆</Emoji>} title="Logros y nivel" chevron onClick={() => irA('logros')} />
-          <TileButton icon={<Emoji>🏦</Emoji>} title="Cuentas" detail={<span className="num">{cuentas.length}</span>} chevron onClick={() => setSub('cuentas')} />
-          <TileButton icon={<Emoji>🏷️</Emoji>} title="Categorías" detail={<span className="num">{categorias.length}</span>} chevron onClick={() => setSub('categorias')} />
-          <TileButton icon={<Emoji>🎯</Emoji>} title="Presupuestos" chevron onClick={() => setSub('presupuestos')} />
-          <TileButton icon={<Emoji>🔁</Emoji>} title="Recurrentes" subtitle="Nómina, alquiler, suscripciones…" chevron onClick={() => setSub('recurrentes')} />
+          <TileButton icon={<IconBadge tone="warning"><IconoTrofeo width={20} height={20} /></IconBadge>} title="Logros y nivel" chevron onClick={() => irA('logros')} />
+          <TileButton icon={<IconBadge><IconoEdificio width={20} height={20} /></IconBadge>} title="Cuentas" detail={<span className="num">{cuentas.length}</span>} chevron onClick={() => setSub('cuentas')} />
+          <TileButton icon={<IconBadge><IconoEtiqueta width={20} height={20} /></IconBadge>} title="Categorías" detail={<span className="num">{categorias.length}</span>} chevron onClick={() => setSub('categorias')} />
+          <TileButton icon={<IconBadge tone="success"><IconoDiana width={20} height={20} /></IconBadge>} title="Presupuestos" chevron onClick={() => setSub('presupuestos')} />
+          <TileButton icon={<IconBadge tone="dark"><IconoRepetir width={20} height={20} /></IconBadge>} title="Recurrentes" subtitle="Nómina, alquiler, suscripciones…" chevron onClick={() => setSub('recurrentes')} />
         </Panel>
 
         <Panel title="Preferencias">
@@ -118,9 +119,9 @@ export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
         </Panel>
 
         <Panel title="Tus datos" footer="Todo se guarda solo en este dispositivo. Haz una copia de seguridad de vez en cuando (por ejemplo, a Google Drive o iCloud) para no perder nada si cambias de móvil.">
-          <TileButton icon={<Emoji>📊</Emoji>} title="Exportar a Excel (CSV)" chevron onClick={async () => descargar(`finace-${hoyISO()}.csv`, await exportarCSV(), 'text/csv;charset=utf-8').catch(() => {})} />
+          <TileButton icon={<IconBadge tone="success"><IconoDescargar width={20} height={20} /></IconBadge>} title="Exportar a Excel (CSV)" chevron onClick={async () => descargar(`finace-${hoyISO()}.csv`, await exportarCSV(), 'text/csv;charset=utf-8').catch(() => {})} />
           <TileButton
-            icon={<Emoji>💾</Emoji>}
+            icon={<IconBadge><IconoCompartir width={20} height={20} /></IconBadge>}
             title="Crear copia de seguridad"
             detail={ajustes.copias ? <span className="num">{ajustes.copias} hechas</span> : undefined}
             chevron
@@ -134,7 +135,7 @@ export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
               }
             }}
           />
-          <TileButton icon={<Emoji>📥</Emoji>} title="Restaurar copia de seguridad" chevron onClick={() => archivo.current?.click()} />
+          <TileButton icon={<IconBadge tone="dark"><IconoRepetir width={20} height={20} /></IconBadge>} title="Restaurar copia de seguridad" chevron onClick={() => archivo.current?.click()} />
           <input ref={archivo} type="file" accept="application/json,.json" className="hidden" onChange={(e) => e.target.files?.[0] && restaurar(e.target.files[0]).finally(() => (e.target.value = ''))} />
         </Panel>
 
@@ -145,18 +146,16 @@ export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
                 Instalar Finace
               </Button>
             ) : (
-              <Tile>
-                <p className="text-[14px] text-muted">
-                  {esIOS ? (
-                    <>
-                      En Safari, toca <b className="text-text">Compartir</b> y luego <b className="text-text">«Añadir a pantalla de inicio»</b>. Se abrirá como una app y funcionará sin conexión.
-                    </>
-                  ) : (
-                    <>
-                      En Chrome, abre el menú <b className="text-text">⋮</b> y elige <b className="text-text">«Instalar aplicación»</b> o <b className="text-text">«Añadir a pantalla de inicio»</b>.
-                    </>
-                  )}
-                </p>
+              <Tile className="items-start">
+                <IconBadge tone="dark">
+                  <IconoMovil width={20} height={20} />
+                </IconBadge>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-medium">{esIOS ? 'Añadir a la pantalla de inicio' : 'Instalar la aplicación'}</span>
+                  <span className="block text-[13px] text-muted">
+                    {esIOS ? 'En Safari, toca Compartir y luego «Añadir a pantalla de inicio». Funcionará sin conexión.' : 'En Chrome, abre el menú ⋮ y elige «Instalar aplicación».'}
+                  </span>
+                </span>
               </Tile>
             )}
           </Panel>

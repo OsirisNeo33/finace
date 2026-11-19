@@ -241,7 +241,7 @@ codigo/tab-bar.tsx             ← barra de pestañas flotante
 codigo/week-strip.tsx          ← tira de la semana
 codigo/income-expense-chart.tsx← gráfico de barras agrupadas con etiqueta y tabla
 codigo/formato.ts              ← utilidades mínimas (mes, semana, euros) que usan los dos anteriores
-capturas/*.png                 ← referencia visual (iPhone 15, claro y oscuro)
+capturas/*.png                 ← referencia visual (en docs/capturas/) (iPhone 15, claro y oscuro)
 ```
 
 Para usar el kit, copia `codigo/` en `src/components/` (o donde tengas los componentes) y el contenido de `globals.css` en tu CSS global. Los componentes llevan `"use client"`: en Next con App Router se pueden importar desde páginas de servidor.

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { ProveedorDatos, useDatos } from './contexto';
 import { Editor } from './components/Editor';
 import { Aviso } from './components/Aviso';
-import { IconoAjustes, IconoGrafico, IconoInicio, IconoLista, IconoMas, IconoCalendario } from './components/Iconos';
+import { IconoAjustes, IconoGrafico, IconoHoy, IconoLista, IconoMas, IconoCalendario } from './components/Iconos';
 import { Inicio } from './pantallas/Inicio';
 import { Movimientos, type Filtro } from './pantallas/Movimientos';
 import { Estadisticas } from './pantallas/Estadisticas';
@@ -124,7 +124,7 @@ function Contenido() {
 }
 
 const PESTANAS = [
-  { id: 'inicio', texto: 'Inicio', Icono: IconoInicio },
+  { id: 'inicio', texto: 'Hoy', Icono: IconoHoy },
   { id: 'movimientos', texto: 'Movimientos', Icono: IconoLista },
   { id: 'pagos', texto: 'Pagos', Icono: IconoCalendario },
   { id: 'estadisticas', texto: 'Análisis', Icono: IconoGrafico },
