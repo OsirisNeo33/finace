@@ -97,6 +97,7 @@ export interface Copia {
     ajustes: unknown[];
     deudas?: unknown[];
     inversiones?: unknown[];
+    cobros?: unknown[];
   };
 }
 
@@ -114,6 +115,7 @@ export async function exportarJSON(): Promise<Copia> {
       ajustes: await db.ajustes.toArray(),
       deudas: await db.deudas.toArray(),
       inversiones: await db.inversiones.toArray(),
+      cobros: await db.cobros.toArray(),
     },
   };
 }
@@ -121,7 +123,7 @@ export async function exportarJSON(): Promise<Copia> {
 export async function importarJSON(copia: Copia) {
   if (copia?.app !== 'finace' || !copia.datos) throw new Error('El archivo no es una copia de seguridad de Finace.');
   const d = copia.datos;
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones], async () => {
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros], async () => {
     await borrarTablas();
     await db.cuentas.bulkAdd((d.cuentas ?? []) as never[]);
     await db.categorias.bulkAdd((d.categorias ?? []) as never[]);
@@ -131,15 +133,16 @@ export async function importarJSON(copia: Copia) {
     await db.ajustes.bulkAdd((d.ajustes ?? []) as never[]);
     await db.deudas.bulkAdd((d.deudas ?? []) as never[]);
     await db.inversiones.bulkAdd((d.inversiones ?? []) as never[]);
+    await db.cobros.bulkAdd((d.cobros ?? []) as never[]);
   });
 }
 
 async function borrarTablas() {
-  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear(), db.deudas.clear(), db.inversiones.clear()]);
+  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear(), db.deudas.clear(), db.inversiones.clear(), db.cobros.clear()]);
 }
 
 export async function borrarTodo() {
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones], borrarTablas);
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros], borrarTablas);
 }
 
 const csvCelda = (v: unknown) => {
@@ -188,4 +191,19 @@ export async function descargar(nombre: string, contenido: string, tipo: string)
   a.download = nombre;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** Comparte un texto: en el iPhone abre el menú Compartir (WhatsApp, Mensajes…); si no, abre WhatsApp. */
+export async function compartirTexto(texto: string) {
+  const { Capacitor } = await import('@capacitor/core');
+  if (Capacitor.isNativePlatform()) {
+    const { Share } = await import('@capacitor/share');
+    await Share.share({ text: texto });
+    return;
+  }
+  if (navigator.share) {
+    await navigator.share({ text: texto });
+    return;
+  }
+  window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank', 'noopener');
 }

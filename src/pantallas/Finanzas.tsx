@@ -5,10 +5,12 @@ import { IconoAlerta, IconoEscudo, IconoMoneda, IconoTarjeta, IconoTendencia } f
 import { useDatos } from '../contexto';
 import type { Destino, Indicador } from '../domain/salud';
 import { ESTADOS, NIVELES, usarFinanzas } from './usarFinanzas';
+import { porPersona } from '../domain/cobros';
 import { Deudas } from './finanzas/Deudas';
 import { Inversiones } from './finanzas/Inversiones';
+import { MeDeben } from './finanzas/MeDeben';
 
-export type VistaFinanzas = 'resumen' | 'deudas' | 'inversiones';
+export type VistaFinanzas = 'resumen' | 'deudas' | 'cobros' | 'inversiones';
 
 const ICONOS: Record<Indicador['id'], ReactNode> = {
   ahorro: <IconoMoneda width={20} height={20} />,
@@ -30,11 +32,21 @@ export function Finanzas({ vista, setVista }: { vista: VistaFinanzas; setVista: 
           options={[
             { value: 'resumen', label: 'Resumen' },
             { value: 'deudas', label: 'Deudas' },
-            { value: 'inversiones', label: 'Inversiones' },
+            { value: 'cobros', label: 'Me deben' },
+            {
+              value: 'inversiones',
+              label: (
+                <>
+                  <span className="min-[400px]:hidden">Inversión</span>
+                  <span className="hidden min-[400px]:inline">Inversiones</span>
+                </>
+              ),
+            },
           ]}
         />
         {vista === 'resumen' && <Resumen setVista={setVista} />}
         {vista === 'deudas' && <Deudas />}
+        {vista === 'cobros' && <MeDeben />}
         {vista === 'inversiones' && <Inversiones />}
       </Page>
     </>
@@ -80,7 +92,7 @@ export function TarjetaSalud({ onClick, compacta }: { onClick?: () => void; comp
   );
 }
 
-const TEXTO_DESTINO: Record<Destino, string> = { deudas: 'Ver deudas', inversiones: 'Ver inversiones', contabilidad: 'Ir a Contabilidad', movimientos: 'Ver movimientos' };
+const TEXTO_DESTINO: Record<Destino, string> = { deudas: 'Ver deudas', cobros: 'Ver quién te debe', inversiones: 'Ver inversiones', contabilidad: 'Ir a Contabilidad', movimientos: 'Ver movimientos' };
 
 function Resumen({ setVista }: { setVista: (v: VistaFinanzas) => void }) {
   const { dinero } = useDatos();
@@ -88,7 +100,7 @@ function Resumen({ setVista }: { setVista: (v: VistaFinanzas) => void }) {
   const { salud } = usarFinanzas();
   const c = salud.cifras;
 
-  const irA = (d: Destino) => (d === 'deudas' || d === 'inversiones' ? setVista(d) : ir(d === 'contabilidad' ? 'pagos' : 'movimientos'));
+  const irA = (d: Destino) => (d === 'deudas' || d === 'inversiones' || d === 'cobros' ? setVista(d) : ir(d === 'contabilidad' ? 'pagos' : 'movimientos'));
 
   return (
     <>
@@ -101,6 +113,7 @@ function Resumen({ setVista }: { setVista: (v: VistaFinanzas) => void }) {
         <div className="mt-4 space-y-2 border-t border-white/10 pt-4 text-[14px]">
           <Linea texto="Dinero en cuentas" valor={dinero(c.cuentasTotal)} />
           <Linea texto="Inversiones" valor={dinero(c.inversiones)} onClick={() => setVista('inversiones')} />
+          {c.teDeben > 0 && <Linea texto="Te deben" valor={dinero(c.teDeben)} onClick={() => setVista('cobros')} />}
           <Linea texto="Deudas" valor={dinero(-c.deudaTotal)} onClick={() => setVista('deudas')} />
         </div>
       </Card>
@@ -163,5 +176,23 @@ function Linea({ texto, valor, onClick }: { texto: string; valor: string; onClic
     </button>
   ) : (
     <div className="flex items-center justify-between gap-3">{dentro}</div>
+  );
+}
+
+/** Aviso en Hoy de lo que te deben otras personas. */
+export function TarjetaTeDeben({ onClick }: { onClick: () => void }) {
+  const { dinero, movimientos } = useDatos();
+  const { cobros, salud } = usarFinanzas();
+  const n = porPersona(cobros, movimientos).length;
+  if (salud.cifras.teDeben <= 0) return null;
+  return (
+    <button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-[26px] border border-border bg-surface px-5 py-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition active:scale-[0.99]" onClick={onClick}>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-[18px]">🤝</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] text-muted">Te deben</span>
+        <span className="num block text-[17px] font-semibold">{dinero(salud.cifras.teDeben)}</span>
+      </span>
+      <span className="shrink-0 text-[13px] font-medium text-brand">{n === 1 ? '1 persona' : `${n} personas`} ›</span>
+    </button>
   );
 }

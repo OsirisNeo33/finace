@@ -1,5 +1,5 @@
 import { BotonAjustes } from '../navegacion';
-import { TarjetaSalud } from './Finanzas';
+import { TarjetaSalud, TarjetaTeDeben } from './Finanzas';
 import { useMemo, useState } from 'react';
 import { FormCuenta, TIPOS_CUENTA } from './ajustes/Cuentas';
 import type { Cuenta } from '../domain/tipos';
@@ -126,6 +126,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
         </Card>
 
         {movimientos.length > 0 && esActual && <TarjetaSalud compacta onClick={() => ir('finanzas')} />}
+        {esActual && <TarjetaTeDeben onClick={() => ir('cobros')} />}
 
         {/* Nivel y reto semanal */}
         {movimientos.length > 0 && esActual && (

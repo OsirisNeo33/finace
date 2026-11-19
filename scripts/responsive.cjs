@@ -193,7 +193,7 @@ const revisar = () => {
     await p.getByRole('button', { name: /Hipoteca del piso/ }).click();
     await mirar('detalle-deuda');
     await p.getByRole('dialog').getByRole('button', { name: 'Cerrar' }).click();
-    await p.getByRole('tab', { name: 'Inversiones' }).click();
+    await p.getByRole('tab', { name: /^Inversi/ }).click();
     await p.getByRole('button', { name: '+ Añadir inversión' }).click();
     await p.getByLabel('Nombre').fill('Fondo indexado MSCI World acumulación');
     await p.getByLabel('Dinero aportado').fill('25000');
@@ -201,6 +201,21 @@ const revisar = () => {
     await mirar('hoja-inversion');
     await p.getByRole('button', { name: 'Guardar' }).click();
     await mirar('inversiones');
+    await p.getByRole('tab', { name: 'Me deben' }).click();
+    await mirar('me-deben-vacio');
+    for (const [n, c, x] of [['María José Fernández', 'Mitad del regalo de cumpleaños de Lucía', '1234,56'], ['María José Fernández', 'Entradas concierto', '89'], ['Pablo', 'Cena', '25']]) {
+      await p.getByRole('button', { name: '+ Alguien me debe dinero' }).click();
+      await p.getByLabel('Nombre').fill(n);
+      await p.getByLabel('Por qué te lo debe').fill(c);
+      await p.getByLabel('Cuánto te debe').fill(x);
+      if (c === 'Cena') await p.getByLabel('Desde').fill('2026-01-15');
+      await p.getByRole('button', { name: 'Guardar' }).click();
+      await p.waitForTimeout(200);
+    }
+    await mirar('me-deben');
+    await p.getByRole('button', { name: /María José Fernández: te debe/ }).click();
+    await mirar('persona');
+    await p.getByRole('dialog').getByRole('button', { name: 'Cerrar' }).click();
     await p.getByRole('tab', { name: 'Resumen' }).click();
     await mirar('finanzas-con-datos');
     await tab('Hoy');

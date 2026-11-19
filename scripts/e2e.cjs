@@ -198,6 +198,23 @@ const capturas = process.argv[2];
   await p.locator('[data-consejo="caras"]').getByText(/Tarjeta Visa/).waitFor();
   assert.match(await p.getByTestId('salud').innerText(), /^\d+$/, 'hay puntuación de salud');
   await foto('12-finanzas');
+  // Me deben: apuntar, devolución parcial con deshacer y cobrar todo
+  await p.getByRole('tab', { name: 'Me deben' }).click();
+  await p.getByRole('button', { name: '+ Alguien me debe dinero' }).click();
+  await p.getByLabel('Nombre').fill('Laura');
+  await p.getByLabel('Por qué te lo debe').fill('Cena del sábado');
+  await p.getByLabel('Cuánto te debe').fill('30');
+  await p.getByRole('button', { name: 'Guardar' }).click();
+  await p.getByTestId('te-deben').filter({ hasText: '30,00' }).waitFor();
+  await p.getByRole('button', { name: /Laura: te debe/ }).click();
+  await p.getByLabel('Te ha devuelto').fill('10');
+  await p.getByRole('button', { name: 'Registrar devolución' }).click();
+  await p.getByTestId('persona-pendiente').filter({ hasText: '20,00' }).waitFor();
+  await p.getByRole('button', { name: 'Deshacer' }).click();
+  await p.getByTestId('persona-pendiente').filter({ hasText: '30,00' }).waitFor();
+  await p.getByRole('button', { name: 'Cobrar todo' }).click();
+  await p.getByTestId('te-deben').filter({ hasText: '0,00' }).waitFor();
+  await p.getByText('Ya te lo devolvieron').waitFor();
   await p.getByRole('button', { name: 'Ajustes', exact: true }).click();
 
   // Copia de seguridad: exportar, borrar todo, restaurar

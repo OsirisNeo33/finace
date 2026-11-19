@@ -17,7 +17,7 @@ import { generarRecurrentes } from './db/acciones';
 import { periodoDe } from './domain/fechas';
 
 /** 'calendario' abre Contabilidad directamente en su calendario de pagos. */
-export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'calendario' | 'finanzas' | 'estadisticas' | 'ajustes' | 'logros';
+export type Pestana = 'inicio' | 'movimientos' | 'pagos' | 'calendario' | 'finanzas' | 'cobros' | 'estadisticas' | 'ajustes' | 'logros';
 
 export default function App() {
   return (
@@ -78,7 +78,9 @@ function Contenido() {
     if (f) setFiltro(f);
     if (p === 'calendario' || p === 'pagos') setVistaConta(p === 'calendario' ? 'calendario' : 'resumen');
     if (p === 'ajustes' && pestana !== 'ajustes') setAnterior(pestana);
-    setPestana(p === 'calendario' ? 'pagos' : p);
+    if (p === 'cobros') setVistaFinanzas('cobros');
+    else if (p === 'finanzas') setVistaFinanzas('resumen');
+    setPestana(p === 'calendario' ? 'pagos' : p === 'cobros' ? 'finanzas' : p);
   };
   const props = { periodo, desplazamiento, setDesplazamiento, ir };
 

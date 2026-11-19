@@ -37,6 +37,8 @@ export interface Movimiento {
   recurrenteId?: string;
   /** Pago de una deuda registrado desde Finanzas → Deudas. */
   deudaId?: string;
+  /** Dinero que alguien te ha devuelto (Finanzas → Me deben). */
+  cobroId?: string;
   creadoEn: string;
   actualizadoEn: string;
 }
@@ -115,6 +117,26 @@ export interface Inversion {
   aportado: number; // dinero que has metido (céntimos)
   valor: number; // valor actual (céntimos)
   notas?: string;
+  creadoEn: string;
+  actualizadoEn: string;
+}
+
+/** Devolución registrada sin apuntarla como ingreso (las que sí lo son se leen de los movimientos). */
+export interface Devolucion {
+  fecha: string;
+  importe: number;
+  creadoEn: string;
+}
+
+/** Dinero que te debe una persona (le prestaste, pagaste su parte de una cena…). */
+export interface Cobro {
+  id: string;
+  persona: string;
+  concepto: string;
+  importe: number; // lo que te debía al apuntarlo (céntimos)
+  fecha: string; // desde cuándo
+  devoluciones: Devolucion[];
+  saldado: boolean;
   creadoEn: string;
   actualizadoEn: string;
 }
