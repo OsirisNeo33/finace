@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDatos } from '../contexto';
-import { IconoCompartir, IconoDescargar, IconoDiana, IconoEdificio, IconoEtiqueta, IconoMovil, IconoRepetir, IconoTrofeo } from '../components/Iconos';
-import { Button, IconBadge, Page, PageHeader, Panel, Segmented, SelectField, Tile, TileButton } from '../components/ui';
+import { IconoCompartir, IconoDescargar, IconoDiana, IconoEdificio, IconoEtiqueta, IconoFuego, IconoMovil, IconoRepetir } from '../components/Iconos';
+import { BrandHero, Button, IconBadge, Page, PageHeader, Panel, Segmented, SelectField, Tile, TileButton } from '../components/ui';
 import { guardarAjustes, exportarCSV, exportarJSON, importarJSON, borrarTodo, descargar } from '../db/acciones';
 import { hoyISO } from '../domain/fechas';
 import { Cuentas } from './ajustes/Cuentas';
 import { Categorias } from './ajustes/Categorias';
 import { Presupuestos } from './ajustes/Presupuestos';
 import { Recurrentes } from './ajustes/Recurrentes';
+import { usarJuego } from './usarJuego';
 
 type Sub = 'cuentas' | 'categorias' | 'presupuestos' | 'recurrentes' | null;
 
@@ -31,6 +32,7 @@ export function Ajustes({ irA, onVolver }: { irA: (p: 'logros') => void; onVolve
   const [sub, setSub] = useState<Sub>(null);
   const { ajustes, cuentas, categorias, avisar } = useDatos();
   const archivo = useRef<HTMLInputElement>(null);
+  const juego = usarJuego();
   const [instalar, setInstalar] = useState<EventoInstalar | null>(null);
 
   useEffect(() => {
@@ -80,8 +82,21 @@ export function Ajustes({ irA, onVolver }: { irA: (p: 'logros') => void; onVolve
     <>
       <PageHeader title="Ajustes" subtitle="Organización, preferencias y tus datos" back={{ label: 'Volver', onClick: onVolver }} />
       <Page>
+        {/* Tu perfil en Finace: nivel y racha (lleva a Logros) */}
+        <button type="button" className="block w-full text-left tarjeta-tactil" onClick={() => irA('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
+          <BrandHero name="Finace">
+            <span className="flex flex-wrap items-center gap-x-2">
+              <span>
+                Nivel {juego.nivel} · {juego.nombre}
+              </span>
+              <span className="num inline-flex items-center gap-0.5 font-semibold text-warning">
+                <IconoFuego width={14} height={14} /> {juego.racha} {juego.racha === 1 ? 'día' : 'días'}
+              </span>
+            </span>
+          </BrandHero>
+        </button>
+
         <Panel title="Organización">
-          <TileButton icon={<IconBadge tone="warning"><IconoTrofeo width={20} height={20} /></IconBadge>} title="Logros y nivel" chevron onClick={() => irA('logros')} />
           <TileButton icon={<IconBadge><IconoEdificio width={20} height={20} /></IconBadge>} title="Cuentas" detail={<span className="num">{cuentas.length}</span>} chevron onClick={() => setSub('cuentas')} />
           <TileButton icon={<IconBadge><IconoEtiqueta width={20} height={20} /></IconBadge>} title="Categorías" detail={<span className="num">{categorias.length}</span>} chevron onClick={() => setSub('categorias')} />
           <TileButton icon={<IconBadge tone="success"><IconoDiana width={20} height={20} /></IconBadge>} title="Presupuestos" chevron onClick={() => setSub('presupuestos')} />
