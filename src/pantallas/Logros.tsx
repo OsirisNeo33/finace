@@ -1,6 +1,6 @@
 import { usarJuego } from './usarJuego';
 import { IconoFuego } from '../components/Iconos';
-import { Card, Chip, DataTile, Emoji, Label, Page, PageHeader, Panel, ProgressBar, Tile, cx } from '../components/ui';
+import { Cifra, Card, Chip, DataTile, Emoji, Label, Page, PageHeader, Panel, ProgressBar, Tile, cx } from '../components/ui';
 
 export function Logros({ onVolver }: { onVolver: () => void }) {
   const j = usarJuego();
@@ -17,9 +17,7 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-[13px] text-white/60">Nivel</p>
-              <p className="num text-[34px] leading-tight font-semibold" data-testid="nivel">
-                {j.nivel}
-              </p>
+              <Cifra max={34} data-testid="nivel">{j.nivel}</Cifra>
               <p className="text-[15px] font-semibold">{j.nombre}</p>
             </div>
             <Chip tone="brand" className="num">
@@ -36,9 +34,9 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
 
         {/* Racha */}
         <div className="grid grid-cols-3 gap-3">
-          <Cifra icono={<IconoFuego width={20} height={20} className="text-warning" />} valor={j.racha} texto={j.racha === 1 ? 'día de racha' : 'días de racha'} />
-          <Cifra icono="🏆" valor={j.rachaMax} texto="mejor racha" />
-          <Cifra icono="🎖️" valor={`${conseguidos}/${j.logros.length}`} texto="insignias" />
+          <Dato icono={<IconoFuego width={20} height={20} className="text-warning" />} valor={j.racha} texto={j.racha === 1 ? 'día de racha' : 'días de racha'} />
+          <Dato icono="🏆" valor={j.rachaMax} texto="mejor racha" />
+          <Dato icono="🎖️" valor={`${conseguidos}/${j.logros.length}`} texto="insignias" />
         </div>
 
         {/* Retos */}
@@ -72,9 +70,10 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
                 <span className="text-[12px] leading-tight text-muted">{l.descripcion}</span>
                 <div className="mt-auto w-full pt-2">
                   {l.desbloqueado ? (
-                    <Chip tone="success" className="num">
-                      Conseguida · +{l.xp} XP
-                    </Chip>
+                    <>
+                      <Chip tone="success">Conseguida</Chip>
+                      <span className="num mt-1 block text-[12px] text-muted">+{l.xp} XP</span>
+                    </>
                   ) : (
                     <>
                       <ProgressBar value={l.actual / l.meta} />
@@ -100,11 +99,11 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
   );
 }
 
-function Cifra({ icono, valor, texto }: { icono: React.ReactNode; valor: React.ReactNode; texto: string }) {
+function Dato({ icono, valor, texto }: { icono: React.ReactNode; valor: string | number; texto: string }) {
   return (
     <Card className="flex flex-col items-center p-3 text-center">
       <span className="flex h-6 items-center text-[20px]">{icono}</span>
-      <span className="num mt-1 text-[22px] font-semibold">{valor}</span>
+      <Cifra max={22} className="mt-1 text-center">{valor}</Cifra>
       <Label className="text-[12px] leading-tight">{texto}</Label>
     </Card>
   );

@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
-import { Alerta, AmountField, Button, Card, Emoji, Field, FieldRow, Panel, Segmented, SelectField, Tile, TileButton, Toggle, cx } from '../../components/ui';
+import { Cifra, Alerta, AmountField, Button, Card, Emoji, Field, FieldRow, Panel, Segmented, SelectField, Tile, TileButton, Toggle, cx } from '../../components/ui';
 import { aCentimos } from '../../domain/dinero';
 import { fechaCorta, fechasPendientes, hoyISO, siguienteFecha } from '../../domain/fechas';
 import type { Frecuencia, Recurrente } from '../../domain/tipos';
 import { db } from '../../db/db';
 import { generarRecurrentes, guardarRecurrente } from '../../db/acciones';
 import { parseISO } from 'date-fns';
+import { equivalenteMensual } from '../../domain/fijos';
 
-const FREC: Record<Frecuencia, string> = { semanal: 'Cada semana', mensual: 'Cada mes', anual: 'Cada año' };
+export const FREC: Record<Frecuencia, string> = { semanal: 'Cada semana', mensual: 'Cada mes', anual: 'Cada año' };
 
 function proxima(r: Recurrente) {
   if (!r.ultimaGeneracion) return r.inicio;
@@ -24,14 +25,14 @@ export function Recurrentes() {
 
   const mensual = recurrentes
     .filter((r) => r.activo && r.tipo === 'gasto')
-    .reduce((s, r) => s + (r.frecuencia === 'mensual' ? r.importe : r.frecuencia === 'semanal' ? Math.round((r.importe * 52) / 12) : Math.round(r.importe / 12)), 0);
+    .reduce((s, r) => s + equivalenteMensual(r), 0);
 
   return (
     <>
       {mensual > 0 && (
         <Card dark>
           <p className="text-[13px] text-white/60">Gastos fijos al mes (aprox.)</p>
-          <p className="num mt-1 text-[34px] leading-tight font-semibold">{dinero(mensual)}</p>
+          <Cifra max={34} className="mt-1">{dinero(mensual)}</Cifra>
         </Card>
       )}
       <Panel title="Tus recurrentes" detail={recurrentes.length ? <span className="num">{recurrentes.length}</span> : undefined} footer="Se apuntan solos en su fecha (al abrir la app) o, si los dejas como recordatorio, los marcas tú como pagados en la pestaña Pagos.">
@@ -64,9 +65,9 @@ export function Recurrentes() {
   );
 }
 
-export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente; onCerrar: () => void; inicioInicial?: string }) {
+export function FormRecurrente({ r, onCerrar, inicioInicial, tipoInicial }: { r?: Recurrente; onCerrar: () => void; inicioInicial?: string; tipoInicial?: 'gasto' | 'ingreso' }) {
   const { categorias, cuentas, ajustes, avisar } = useDatos();
-  const [tipo, setTipo] = useState<'gasto' | 'ingreso'>(r?.tipo ?? 'gasto');
+  const [tipo, setTipo] = useState<'gasto' | 'ingreso'>(r?.tipo ?? tipoInicial ?? 'gasto');
   const [valor, setValor] = useState(r ? (r.importe / 100).toString().replace('.', ',') : '');
   const [categoriaId, setCategoriaId] = useState(r?.categoriaId ?? '');
   const [cuentaId, setCuentaId] = useState(r?.cuentaId ?? ajustes.ultimaCuentaId ?? cuentas[0]?.id ?? '');
@@ -87,7 +88,7 @@ export function FormRecurrente({ r, onCerrar, inicioInicial }: { r?: Recurrente;
   }
 
   return (
-    <Hoja titulo={r ? 'Editar recurrente' : 'Nuevo recurrente'} onCerrar={onCerrar}>
+    <Hoja titulo={r ? (r.tipo === 'ingreso' ? 'Editar ingreso fijo' : 'Editar gasto fijo') : tipoInicial ? (tipoInicial === 'ingreso' ? 'Nuevo ingreso fijo' : 'Nuevo gasto fijo') : 'Nuevo recurrente'} onCerrar={onCerrar}>
       <div className="space-y-3 px-4 pb-5">
         <Segmented
           label="Tipo"

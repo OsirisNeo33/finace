@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
 import { SelectorIcono } from '../../components/Selectores';
-import { AmountField, Button, Card, ChipButton, Emoji, Field, Panel, SelectField, TileButton, cx } from '../../components/ui';
+import { Cifra, AmountField, Button, Card, ChipButton, Emoji, Field, Panel, SelectField, TileButton, cx } from '../../components/ui';
 import { saldosCuentas } from '../../domain/calculos';
 import { aCentimos } from '../../domain/dinero';
 import { ENTIDADES, saldoInicialPara } from '../../domain/bancos';
@@ -28,7 +28,7 @@ export function Cuentas() {
     <>
       <Card dark>
         <p className="text-[13px] text-white/60">Total en todas tus cuentas</p>
-        <p className="num mt-1 text-[34px] leading-tight font-semibold">{dinero(total)}</p>
+        <Cifra max={34} className="mt-1">{dinero(total)}</Cifra>
         <p className="mt-1 text-[13px] text-white/60">
           {todasCuentas.filter((c) => !c.archivada).length} {todasCuentas.filter((c) => !c.archivada).length === 1 ? 'cuenta' : 'cuentas'}
         </p>

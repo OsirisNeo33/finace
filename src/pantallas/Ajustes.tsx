@@ -27,7 +27,7 @@ interface EventoInstalar extends Event {
   prompt: () => Promise<void>;
 }
 
-export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
+export function Ajustes({ irA, onVolver }: { irA: (p: 'logros') => void; onVolver: () => void }) {
   const [sub, setSub] = useState<Sub>(null);
   const { ajustes, cuentas, categorias, avisar } = useDatos();
   const archivo = useRef<HTMLInputElement>(null);
@@ -78,7 +78,7 @@ export function Ajustes({ irA }: { irA: (p: 'logros') => void }) {
 
   return (
     <>
-      <PageHeader title="Ajustes" subtitle="Organización, preferencias y tus datos" />
+      <PageHeader title="Ajustes" subtitle="Organización, preferencias y tus datos" back={{ label: 'Volver', onClick: onVolver }} />
       <Page>
         <Panel title="Organización">
           <TileButton icon={<IconBadge tone="warning"><IconoTrofeo width={20} height={20} /></IconBadge>} title="Logros y nivel" chevron onClick={() => irA('logros')} />

@@ -95,6 +95,8 @@ export interface Copia {
     recurrentes: unknown[];
     presupuestos: unknown[];
     ajustes: unknown[];
+    deudas?: unknown[];
+    inversiones?: unknown[];
   };
 }
 
@@ -110,6 +112,8 @@ export async function exportarJSON(): Promise<Copia> {
       recurrentes: await db.recurrentes.toArray(),
       presupuestos: await db.presupuestos.toArray(),
       ajustes: await db.ajustes.toArray(),
+      deudas: await db.deudas.toArray(),
+      inversiones: await db.inversiones.toArray(),
     },
   };
 }
@@ -117,7 +121,7 @@ export async function exportarJSON(): Promise<Copia> {
 export async function importarJSON(copia: Copia) {
   if (copia?.app !== 'finace' || !copia.datos) throw new Error('El archivo no es una copia de seguridad de Finace.');
   const d = copia.datos;
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes], async () => {
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones], async () => {
     await borrarTablas();
     await db.cuentas.bulkAdd((d.cuentas ?? []) as never[]);
     await db.categorias.bulkAdd((d.categorias ?? []) as never[]);
@@ -125,15 +129,17 @@ export async function importarJSON(copia: Copia) {
     await db.recurrentes.bulkAdd((d.recurrentes ?? []) as never[]);
     await db.presupuestos.bulkAdd((d.presupuestos ?? []) as never[]);
     await db.ajustes.bulkAdd((d.ajustes ?? []) as never[]);
+    await db.deudas.bulkAdd((d.deudas ?? []) as never[]);
+    await db.inversiones.bulkAdd((d.inversiones ?? []) as never[]);
   });
 }
 
 async function borrarTablas() {
-  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear()]);
+  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear(), db.deudas.clear(), db.inversiones.clear()]);
 }
 
 export async function borrarTodo() {
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes], borrarTablas);
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones], borrarTablas);
 }
 
 const csvCelda = (v: unknown) => {
@@ -141,11 +147,13 @@ const csvCelda = (v: unknown) => {
   return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 };
 
-export async function exportarCSV(): Promise<string> {
-  const [movs, cuentas, cats] = await Promise.all([db.movimientos.orderBy('fecha').toArray(), db.cuentas.toArray(), db.categorias.toArray()]);
+/** Exporta los movimientos a CSV (Excel); con `desde`/`hasta` (AAAA-MM-DD, incluidos) solo ese periodo. */
+export async function exportarCSV(desde?: string, hasta?: string): Promise<string> {
+  const [todos, cuentas, cats] = await Promise.all([db.movimientos.orderBy('fecha').toArray(), db.cuentas.toArray(), db.categorias.toArray()]);
+  const movs = todos.filter((m) => (!desde || m.fecha >= desde) && (!hasta || m.fecha <= hasta));
   const nc = new Map(cuentas.map((c) => [c.id, c.nombre]));
   const ncat = new Map(cats.map((c) => [c.id, c.nombre]));
-  const filas = [['Fecha', 'Tipo', 'Importe', 'Categoría', 'Cuenta', 'Cuenta destino', 'Nota', 'Etiquetas']];
+  const filas = [['Fecha', 'Tipo', 'Importe', 'Categoría', 'Cuenta', 'Cuenta destino', 'Nota', 'Etiquetas', 'Fijo']];
   for (const m of movs) {
     const signo = m.tipo === 'gasto' ? -1 : 1;
     filas.push([
@@ -157,6 +165,7 @@ export async function exportarCSV(): Promise<string> {
       m.cuentaDestinoId ? nc.get(m.cuentaDestinoId) ?? '' : '',
       m.nota ?? '',
       m.etiquetas.join(' '),
+      m.recurrenteId ? 'Sí' : '',
     ]);
   }
   // BOM para que Excel abra bien los acentos; separador ; (configuración regional española)

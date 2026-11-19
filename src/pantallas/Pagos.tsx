@@ -8,7 +8,7 @@ import { db } from '../db/db';
 import { marcarPagado, usarPagos, type Pago } from './usarPagos';
 import type { Recurrente } from '../domain/tipos';
 import { IconoCheck, IconoMas } from '../components/Iconos';
-import { Button, Card, CardTitle, Chip, Emoji, HeaderButton, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, cx, type TonoChip } from '../components/ui';
+import { Cifra, Button, Card, CardTitle, Chip, Emoji, HeaderButton, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, cx, type TonoChip } from '../components/ui';
 
 const ESTADO: Record<Pago['estado'], { texto: string; tono: TonoChip }> = {
   pagado: { texto: 'Pagado', tono: 'success' },
@@ -17,7 +17,8 @@ const ESTADO: Record<Pago['estado'], { texto: string; tono: TonoChip }> = {
   vencido: { texto: 'Sin pagar', tono: 'danger' },
 };
 
-export function Pagos() {
+/** Calendario de pagos fijos. `embebido` lo muestra dentro de Contabilidad, sin cabecera propia. */
+export function Pagos({ embebido }: { embebido?: boolean } = {}) {
   const { dinero } = useDatos();
   const [desplazamiento, setDesplazamiento] = useState(0);
   const [diaSel, setDiaSel] = useState<string>();
@@ -43,18 +44,8 @@ export function Pagos() {
   const despues = Array.from({ length: 7 - getISODay(ultimo) }, (_, i) => aISO(addDays(ultimo, i + 1)));
   const visibles = diaSel ? porDia.get(diaSel) ?? [] : pagos;
 
-  return (
+  const contenido = (
     <>
-      <PageHeader
-        title="Pagos"
-        subtitle="Suscripciones, recibos y pagos que se repiten"
-        action={
-          <HeaderButton label="Añadir pago" onClick={() => setForm({ inicio: diaSel })}>
-            <IconoMas width={22} height={22} />
-          </HeaderButton>
-        }
-      />
-      <Page>
         <SelectorPeriodo
           periodo={periodo}
           desplazamiento={desplazamiento}
@@ -69,14 +60,12 @@ export function Pagos() {
         <div className="grid grid-cols-2 gap-3">
           <Card dark className="p-4">
             <p className="text-[13px] text-white/60">Pagos fijos este mes</p>
-            <p className="num mt-1 text-[22px] font-semibold" data-testid="total-pagos">
-              {dinero(total)}
-            </p>
+            <Cifra max={22} className="mt-1" data-testid="total-pagos">{dinero(total)}</Cifra>
             {total > 0 && <p className="num mt-1 text-[12px] text-white/60">Falta {dinero(total - pagado)}</p>}
           </Card>
           <Card className="p-4">
             <Label>{ingresos > 0 ? 'Ingresos fijos' : 'Ya pagado'}</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{ingresos > 0 ? dinero(ingresos, { signo: true }) : dinero(pagado)}</p>
+            <Cifra max={22} className="mt-1">{ingresos > 0 ? dinero(ingresos, { signo: true }) : dinero(pagado)}</Cifra>
             {total > 0 && (
               <div className="mt-2.5">
                 <ProgressBar value={pagado / total} tone="success" />
@@ -111,7 +100,7 @@ export function Pagos() {
                   key={d}
                   type="button"
                   className={cx(
-                    'mx-auto flex min-h-12 w-11 flex-col items-center gap-1 rounded-2xl pt-2.5 transition active:scale-95',
+                    'mx-auto flex min-h-12 w-full max-w-11 flex-col items-center gap-1 rounded-2xl pt-2.5 transition active:scale-95',
                     elegido && 'bg-brand text-on-brand shadow-[0_6px_16px_-6px_rgba(43,92,230,0.6)]',
                     !elegido && d === hoy && 'text-brand ring-1 ring-brand',
                   )}
@@ -159,7 +148,22 @@ export function Pagos() {
         </Button>
 
         {form && <FormRecurrente r={form.r} inicioInicial={form.inicio} onCerrar={() => setForm(null)} />}
-      </Page>
+    </>
+  );
+  if (embebido) return contenido;
+
+  return (
+    <>
+      <PageHeader
+        title="Pagos"
+        subtitle="Suscripciones, recibos y pagos que se repiten"
+        action={
+          <HeaderButton label="Añadir pago" onClick={() => setForm({ inicio: diaSel })}>
+            <IconoMas width={22} height={22} />
+          </HeaderButton>
+        }
+      />
+      <Page>{contenido}</Page>
     </>
   );
 }
@@ -187,7 +191,7 @@ export function FilaPago({ p, onEditar, mostrarFecha }: { p: Pago; onEditar?: ()
         {manual && p.estado !== 'pagado' ? (
           <button
             type="button"
-            className="-my-1 inline-flex min-h-9 items-center gap-1 rounded-full bg-brand-soft px-3 text-[12px] font-semibold text-brand active:scale-95"
+            className="-my-1 inline-flex min-h-10 items-center gap-1 rounded-full bg-brand-soft px-3 text-[12px] font-semibold text-brand active:scale-95"
             onClick={async () => {
               const id = await marcarPagado(p);
               avisar(`${r.nota || c?.nombre} marcado como pagado`, { etiqueta: 'Deshacer', hacer: () => db.movimientos.delete(id) });

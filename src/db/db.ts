@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Ajustes, Categoria, Cuenta, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
+import type { Ajustes, Categoria, Cuenta, Deuda, Inversion, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
 
 export const db = new Dexie('finace') as Dexie & {
   cuentas: EntityTable<Cuenta, 'id'>;
@@ -8,6 +8,8 @@ export const db = new Dexie('finace') as Dexie & {
   recurrentes: EntityTable<Recurrente, 'id'>;
   presupuestos: EntityTable<Presupuesto, 'id'>;
   ajustes: EntityTable<Ajustes, 'id'>;
+  deudas: EntityTable<Deuda, 'id'>;
+  inversiones: EntityTable<Inversion, 'id'>;
 };
 
 db.version(1).stores({
@@ -19,7 +21,21 @@ db.version(1).stores({
   ajustes: 'id',
 });
 
+// v2: deudas e inversiones. A quien ya usaba la app se le añade la categoría para las cuotas.
+db.version(2)
+  .stores({ deudas: 'id', inversiones: 'id' })
+  .upgrade(async (tx) => {
+    const cats = tx.table<Categoria, string>('categorias');
+    const gastos = await cats.where('tipo').equals('gasto').toArray();
+    if (gastos.length && !gastos.some((c) => c.nombre === CATEGORIA_DEUDAS)) {
+      await cats.add({ id: crypto.randomUUID(), nombre: CATEGORIA_DEUDAS, icono: '💳', color: '#64748b', tipo: 'gasto', orden: gastos.length, archivada: false });
+    }
+  });
+
 export const nuevoId = () => crypto.randomUUID();
+
+/** Categoría de gasto para las cuotas de préstamos y deudas. */
+export const CATEGORIA_DEUDAS = 'Deudas y préstamos';
 export const ahora = () => new Date().toISOString();
 
 export const AJUSTES_POR_DEFECTO: Ajustes = {
@@ -46,6 +62,7 @@ const GASTOS: SemillaCat[] = [
   ['Regalos', '🎁', '#e11d48'],
   ['Viajes', '✈️', '#0d9488'],
   ['Mascotas', '🐾', '#a16207'],
+  [CATEGORIA_DEUDAS, '💳', '#64748b'],
   ['Café', '☕', '#92400e'],
   ['Otros', '📦', '#64748b'],
 ];
