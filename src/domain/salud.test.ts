@@ -85,6 +85,24 @@ describe('salud financiera', () => {
     expect(s.puntos).not.toBeNull();
   });
 
+  it('suma lo que te deben al patrimonio, no lo cuenta como ingreso y avisa si es antiguo', async () => {
+    const { pendienteCobro, porPersona, mensajeRecordatorio } = await import('./cobros');
+    const cobro = (p: object) => ({ id: Math.random().toString(36), persona: 'Ana López', concepto: 'Cena', importe: 6_000, fecha: '2026-09-01', devoluciones: [], saldado: false, creadoEn: '', actualizadoEn: '', ...p });
+    const c1 = cobro({ id: 'c1' });
+    const c2 = cobro({ id: 'c2', persona: 'ana lópez', concepto: 'Entradas', importe: 4_000, fecha: '2026-11-10', devoluciones: [{ fecha: '2026-11-12', importe: 1_000, creadoEn: '' }] });
+    const devuelto = { id: 'm', tipo: 'ingreso' as const, importe: 2_000, fecha: '2026-11-15', cuentaId: 'c1', etiquetas: [], cobroId: 'c1', creadoEn: '', actualizadoEn: '' };
+    expect(pendienteCobro(c1, [devuelto])).toBe(4_000);
+    const [ana] = porPersona([c1, c2], [devuelto], hoy);
+    expect(ana.pendiente).toBe(7_000);
+    expect(ana.cobros.map((c) => c.concepto)).toEqual(['Cena', 'Entradas']);
+    expect(mensajeRecordatorio(ana, dinero)).toContain('Total: 70.00 €');
+    const s = evaluarSalud(datos({ movimientos: [devuelto], cobros: [c1, c2], cuentas: [cuenta({ saldoInicial: 10_000 })], recurrentes: [rec({ tipo: 'ingreso', importe: 200_000 })] }));
+    expect(s.cifras.teDeben).toBe(7_000);
+    expect(s.cifras.patrimonio).toBe(10_000 + 2_000 + 7_000);
+    expect(s.cifras.ingresosMes).toBe(200_000);
+    expect(s.consejos.map((c) => c.id)).toContain('cobrar');
+  });
+
   it('pide los ingresos si no hay datos suficientes', () => {
     const s = evaluarSalud(datos({}));
     expect(s.puntos).toBeNull();

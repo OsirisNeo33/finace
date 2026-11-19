@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Ajustes, Categoria, Cuenta, Deuda, Inversion, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
+import type { Ajustes, Categoria, Cobro, Cuenta, Deuda, Inversion, Movimiento, Presupuesto, Recurrente } from '../domain/tipos';
 
 export const db = new Dexie('finace') as Dexie & {
   cuentas: EntityTable<Cuenta, 'id'>;
@@ -10,6 +10,7 @@ export const db = new Dexie('finace') as Dexie & {
   ajustes: EntityTable<Ajustes, 'id'>;
   deudas: EntityTable<Deuda, 'id'>;
   inversiones: EntityTable<Inversion, 'id'>;
+  cobros: EntityTable<Cobro, 'id'>;
 };
 
 db.version(1).stores({
@@ -32,7 +33,21 @@ db.version(2)
     }
   });
 
+// v3: lo que te deben otras personas, y la categoría de ingreso para las devoluciones.
+db.version(3)
+  .stores({ cobros: 'id, persona' })
+  .upgrade(async (tx) => {
+    const cats = tx.table<Categoria, string>('categorias');
+    const ingresos = await cats.where('tipo').equals('ingreso').toArray();
+    if (ingresos.length && !ingresos.some((c) => c.nombre === CATEGORIA_DEVOLUCIONES)) {
+      await cats.add({ id: crypto.randomUUID(), nombre: CATEGORIA_DEVOLUCIONES, icono: '🤝', color: '#0891b2', tipo: 'ingreso', orden: ingresos.length, archivada: false });
+    }
+  });
+
 export const nuevoId = () => crypto.randomUUID();
+
+/** Categoría de ingreso para el dinero que te devuelven. */
+export const CATEGORIA_DEVOLUCIONES = 'Devoluciones';
 
 /** Categoría de gasto para las cuotas de préstamos y deudas. */
 export const CATEGORIA_DEUDAS = 'Deudas y préstamos';
@@ -72,6 +87,7 @@ const INGRESOS: SemillaCat[] = [
   ['Ventas', '🏷️', '#d97706'],
   ['Regalos', '🎁', '#e11d48'],
   ['Intereses', '📈', '#65a30d'],
+  [CATEGORIA_DEVOLUCIONES, '🤝', '#0891b2'],
   ['Otros', '💰', '#64748b'],
 ];
 

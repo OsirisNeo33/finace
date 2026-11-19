@@ -2,7 +2,8 @@ import { enPeriodo, resumen, saldosCuentas } from './calculos';
 import { periodoDe } from './fechas';
 import { resumenFijos } from './fijos';
 import { TAE_CARA, deudasActivas, ordenAvalancha } from './deudas';
-import type { Cuenta, Deuda, Inversion, Movimiento, Recurrente, TipoInversion } from './tipos';
+import { porPersona } from './cobros';
+import type { Cobro, Cuenta, Deuda, Inversion, Movimiento, Recurrente, TipoInversion } from './tipos';
 
 export const TIPOS_INVERSION: Record<TipoInversion, { nombre: string; icono: string }> = {
   fondo: { nombre: 'Fondo de inversión', icono: '📊' },
@@ -16,7 +17,7 @@ export const TIPOS_INVERSION: Record<TipoInversion, { nombre: string; icono: str
 };
 
 export type Estado = 'bien' | 'mejorable' | 'atencion' | 'sin-datos';
-export type Destino = 'deudas' | 'inversiones' | 'contabilidad' | 'movimientos';
+export type Destino = 'deudas' | 'cobros' | 'inversiones' | 'contabilidad' | 'movimientos';
 
 export interface Indicador {
   id: 'ahorro' | 'colchon' | 'deuda' | 'caras' | 'inversion';
@@ -46,7 +47,8 @@ export interface Cifras {
   ratioDeuda: number | null;
   inversiones: number;
   aportado: number;
-  patrimonio: number; // cuentas + inversiones − deudas
+  teDeben: number; // lo que te deben otras personas
+  patrimonio: number; // cuentas + inversiones + lo que te deben − deudas
 }
 
 export interface Salud {
@@ -62,6 +64,7 @@ export interface DatosSalud {
   cuentas: Cuenta[]; // todas (se ignoran las archivadas)
   deudas: Deuda[];
   inversiones: Inversion[];
+  cobros?: Cobro[];
   recurrentes: Recurrente[];
   diaInicioMes: number;
   hoy: Date;
@@ -79,11 +82,13 @@ const lineal = (x: number, cero: number, cien: number) => Math.round(Math.max(0,
 function mediasMensuales(d: DatosSalud) {
   const fijos = resumenFijos(d.recurrentes);
   const periodos = [1, 2, 3].map((k) => periodoDe(d.hoy, d.diaInicioMes, -k));
-  const historial = periodos.map((p) => d.movimientos.filter((m) => enPeriodo(m, p))).filter((ms) => ms.length > 0);
+  // Las devoluciones de dinero prestado no son ingresos «de verdad»: no cuentan para el ahorro
+  const movs = d.movimientos.filter((m) => !m.cobroId);
+  const historial = periodos.map((p) => movs.filter((m) => enPeriodo(m, p))).filter((ms) => ms.length > 0);
   let ingresos: number;
   let gastos: number;
   let variables: Movimiento[];
-  const actual = resumen(d.movimientos.filter((m) => enPeriodo(m, periodoDe(d.hoy, d.diaInicioMes, 0))));
+  const actual = resumen(movs.filter((m) => enPeriodo(m, periodoDe(d.hoy, d.diaInicioMes, 0))));
   if (historial.length) {
     ingresos = Math.round(historial.reduce((s, ms) => s + resumen(ms).ingresos, 0) / historial.length);
     gastos = Math.round(historial.reduce((s, ms) => s + resumen(ms).gastos, 0) / historial.length);
@@ -91,7 +96,7 @@ function mediasMensuales(d: DatosSalud) {
   } else {
     ingresos = actual.ingresos;
     gastos = Math.max(actual.gastos, fijos.gastos);
-    variables = d.movimientos.filter((m) => enPeriodo(m, periodoDe(d.hoy, d.diaInicioMes, 0)));
+    variables = movs.filter((m) => enPeriodo(m, periodoDe(d.hoy, d.diaInicioMes, 0)));
   }
   // Si aún no hay ingresos apuntados en el historial (app recién empezada), usar los fijos o los de este mes
   if (!ingresos) ingresos = fijos.ingresos || actual.ingresos;
@@ -114,11 +119,13 @@ export function evaluarSalud(d: DatosSalud): Salud {
   const cuotas = activas.reduce((s, x) => s + x.cuota, 0);
   const inversiones = d.inversiones.reduce((s, x) => s + x.valor, 0);
   const aportado = d.inversiones.reduce((s, x) => s + x.aportado, 0);
+  const personas = porPersona(d.cobros ?? [], d.movimientos, d.hoy);
+  const teDeben = personas.reduce((s, p) => s + p.pendiente, 0);
   const tasaAhorro = ingresos > 0 ? (ingresos - gastos) / ingresos : null;
   const mesesColchon = gastos > 0 ? liquidez / gastos : null;
   const ratioDeuda = ingresos > 0 ? cuotas / ingresos : cuotas > 0 ? null : 0;
   const caras = ordenAvalancha(activas.filter((x) => x.tae >= TAE_CARA));
-  const cifras: Cifras = { ingresosMes: ingresos, gastosMes: gastos, tasaAhorro, liquidez, cuentasTotal, mesesColchon, deudaTotal, cuotas, ratioDeuda, inversiones, aportado, patrimonio: cuentasTotal + inversiones - deudaTotal };
+  const cifras: Cifras = { ingresosMes: ingresos, gastosMes: gastos, tasaAhorro, liquidez, cuentasTotal, mesesColchon, deudaTotal, cuotas, ratioDeuda, inversiones, aportado, teDeben, patrimonio: cuentasTotal + inversiones + teDeben - deudaTotal };
 
   // --- Indicadores ---
   const pAhorro = tasaAhorro === null ? null : lineal(tasaAhorro, 0, 0.2);
@@ -226,6 +233,14 @@ export function evaluarSalud(d: DatosSalud): Salud {
         consejos.push({ id: 'diversificar', titulo: 'Diversifica tus inversiones', texto: `El ${pct(cuota)} está en ${TIPOS_INVERSION[tipo].nombre.toLowerCase()}. Repartir entre distintos tipos y mercados reduce el riesgo.`, destino: 'inversiones' });
     }
   }
+  const olvidado = personas.filter((p) => p.dias >= 30).sort((a, b) => b.pendiente - a.pendiente)[0];
+  if (olvidado)
+    consejos.push({
+      id: 'cobrar',
+      titulo: `Reclama lo que te deben`,
+      texto: `${olvidado.nombre} te debe ${d.dinero(olvidado.pendiente)} desde hace ${olvidado.dias} días. Un recordatorio amable por WhatsApp suele bastar.`,
+      destino: 'cobros',
+    });
   if (!consejos.length)
     consejos.push({ id: 'bien', titulo: '¡Vas muy bien!', texto: 'Revisa una vez al año tus seguros, tarifas y suscripciones, y aumenta lo que inviertes cuando suban tus ingresos.' });
 
