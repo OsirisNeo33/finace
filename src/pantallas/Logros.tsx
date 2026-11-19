@@ -70,9 +70,10 @@ export function Logros({ onVolver }: { onVolver: () => void }) {
                 <span className="text-[12px] leading-tight text-muted">{l.descripcion}</span>
                 <div className="mt-auto w-full pt-2">
                   {l.desbloqueado ? (
-                    <Chip tone="success" className="num">
-                      Conseguida · +{l.xp} XP
-                    </Chip>
+                    <>
+                      <Chip tone="success">Conseguida</Chip>
+                      <span className="num mt-1 block text-[12px] text-muted">+{l.xp} XP</span>
+                    </>
                   ) : (
                     <>
                       <ProgressBar value={l.actual / l.meta} />

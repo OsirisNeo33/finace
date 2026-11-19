@@ -52,6 +52,12 @@ const revisar = () => {
     const r = el.getBoundingClientRect();
     if (r.height < 40 || r.width < 40) out.push(`PEQUEÑO «${desc(el)}» ${Math.round(r.width)}x${Math.round(r.height)}`);
   }
+  // Chips (etiquetas de estado) partidos en dos líneas o más anchos que su tarjeta
+  for (const el of document.querySelectorAll('span.rounded-full.border')) {
+    if (!visible(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.height > 30) out.push(`CHIP-2-LINEAS «${desc(el)}» ${Math.round(r.width)}x${Math.round(r.height)}`);
+  }
   for (const el of document.querySelectorAll('nav span.truncate')) if (el.scrollWidth > el.clientWidth + 1) out.push('ETIQUETA-CORTADA «' + el.innerText + '»');
   return [...new Set(out)];
 };

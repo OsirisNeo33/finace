@@ -3,7 +3,7 @@ import { useDatos } from '../contexto';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { IconoCerrar, IconoLista } from '../components/Iconos';
-import { Cifra, Button, Card, Chip, ChipButton, ChipSelect, EmptyState, Label, Page, PageHeader, Panel, SearchField } from '../components/ui';
+import { Cifra, Button, Card, ChipButton, ChipSelect, EmptyState, Label, Page, PageHeader, Panel, SearchField } from '../components/ui';
 import { agruparPorDia, enPeriodo, resumen } from '../domain/calculos';
 import { fechaLarga } from '../domain/fechas';
 import type { TipoMovimiento } from '../domain/tipos';
@@ -51,7 +51,16 @@ export function Movimientos({ periodo, desplazamiento, setDesplazamiento, filtro
 
   return (
     <>
-      <PageHeader title="Movimientos" subtitle={`${filtrados.length} ${filtrados.length === 1 ? 'movimiento' : 'movimientos'}${hayFiltros || filtro.periodo ? ' con estos filtros' : ''}`} />
+      <PageHeader
+        title="Movimientos"
+        subtitle={
+          <>
+            {filtrados.length} {filtrados.length === 1 ? 'movimiento' : 'movimientos'}
+            {hayFiltros || filtro.periodo ? ' con estos filtros' : ''} · balance{' '}
+            <span className={`num font-medium ${r.balance < 0 ? 'text-danger' : 'text-success'}`}>{dinero(r.balance, { signo: true })}</span>
+          </>
+        }
+      />
       <Page>
         <SearchField placeholder="Buscar por nota, categoría, importe…" value={filtro.texto ?? ''} onChange={(e) => set({ texto: e.target.value })} />
 
@@ -113,9 +122,6 @@ export function Movimientos({ periodo, desplazamiento, setDesplazamiento, filtro
           <Card className="p-4">
             <Label>Gastos</Label>
             <Cifra max={22} className="mt-1">{dinero(r.gastos)}</Cifra>
-            <Chip tone={r.balance < 0 ? 'danger' : 'success'} className="num mt-1.5">
-              Balance {dinero(r.balance, { signo: true })}
-            </Chip>
           </Card>
         </div>
 
