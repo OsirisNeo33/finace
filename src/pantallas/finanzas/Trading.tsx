@@ -129,7 +129,7 @@ function FilaOperacion({ o, onClick }: { o: Operacion; onClick: () => void }) {
   const r = resultado(o);
   const rent = rentabilidad(o);
   return (
-    <button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2" onClick={onClick} aria-label={`${o.activo}${r === null ? ', abierta' : `: ${dinero(r, { signo: true })}`}`}>
+    <button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2" onClick={onClick} aria-label={`${o.activo}${r === null ? ', abierta' : `: ${dinero(r, { signo: true })}`}`}>
       <Emoji>{MERCADOS[o.mercado].icono}</Emoji>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-1.5">

@@ -32,7 +32,7 @@ export function PageHeader({ title, subtitle, back, action }: { title: ReactNode
 }
 
 export function Page({ children }: { children: ReactNode }) {
-  return <div className="mx-auto max-w-2xl space-y-3 px-4 pb-8">{children}</div>;
+  return <div className="pagina mx-auto max-w-2xl space-y-3 px-4 pb-8">{children}</div>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -41,7 +41,7 @@ export function Page({ children }: { children: ReactNode }) {
 
 /** Tarjeta blanca muy redondeada; `dark` la convierte en la tarjeta negra destacada. */
 export function Card({ className, dark, ...props }: ComponentProps<'div'> & { dark?: boolean }) {
-  return <div {...props} className={cx('rounded-[26px] border p-5', dark ? 'border-transparent bg-surface-dark text-white' : 'border-border bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.04)]', className)} />;
+  return <div {...props} className={cx('rounded-[26px] border p-5', props.onClick && 'tarjeta-tactil cursor-pointer', dark ? 'border-transparent bg-surface-dark text-white' : 'border-border bg-surface shadow-[0_1px_2px_rgba(16,24,40,0.04)]', className)} />;
 }
 
 export function CardTitle({ children, detail }: { children: ReactNode; detail?: ReactNode }) {
@@ -135,7 +135,7 @@ export function TileButton({
   ...props
 }: Omit<ComponentProps<'button'>, 'title'> & { icon?: ReactNode; title: ReactNode; subtitle?: ReactNode; detail?: ReactNode; chevron?: boolean }) {
   return (
-    <button type="button" {...props} className={cx(tileClass, 'transition active:scale-[0.99] active:bg-surface-2 disabled:opacity-50', className)}>
+    <button type="button" {...props} className={cx(tileClass, 'tarjeta-tactil active:bg-surface-2 disabled:opacity-50', className)}>
       <TileBody
         icon={icon}
         title={title}

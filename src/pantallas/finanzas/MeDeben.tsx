@@ -71,7 +71,7 @@ export function MeDeben() {
             <button
               key={p.nombre}
               type="button"
-              className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+              className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2"
               onClick={() => setAbierta(p.nombre.toLowerCase())}
               aria-label={`${p.nombre}: te debe ${dinero(p.pendiente)}`}
             >
@@ -183,7 +183,7 @@ function DetallePersona({ p, onCerrar, onAnadir }: { p: Persona; onCerrar: () =>
               <button
                 key={c.id}
                 type="button"
-                className={cx('flex min-h-14 w-full items-center gap-3 rounded-[18px] border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99]', cobrando === c.id ? 'border-brand' : 'border-border')}
+                className={cx('flex min-h-14 w-full items-center gap-3 rounded-[18px] border bg-surface px-3.5 py-3 text-left tarjeta-tactil', cobrando === c.id ? 'border-brand' : 'border-border')}
                 onClick={() => elegir(c)}
                 aria-pressed={cobrando === c.id}
               >

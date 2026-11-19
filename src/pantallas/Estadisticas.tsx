@@ -125,7 +125,7 @@ export function Estadisticas({ periodo, desplazamiento, setDesplazamiento, ir }:
                 <button
                   key={c.id}
                   type="button"
-                  className="flex w-full flex-col gap-2 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+                  className="flex w-full flex-col gap-2 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2"
                   onClick={() => ir('movimientos', { categoriaId: c.id, periodo: true })}
                 >
                   <span className="flex w-full items-center gap-3">
