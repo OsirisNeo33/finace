@@ -72,7 +72,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
     <>
       <PageHeader title="Hoy" action={<BotonAjustes />} subtitle={<span className="inline-block first-letter:uppercase">{format(new Date(), "EEEE, d 'de' MMMM", { locale: es })}</span>} />
       <Page>
-        <button type="button" className="block w-full text-left transition active:scale-[0.99]" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
+        <button type="button" className="block w-full text-left tarjeta-tactil" onClick={() => ir('logros')} aria-label={`Nivel ${juego.nivel}, racha de ${juego.racha} días. Ver logros`}>
           <BrandHero name="Finace">
             <span className="flex flex-wrap items-center gap-x-2">
               <span>
@@ -130,7 +130,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
 
         {/* Nivel y reto semanal */}
         {movimientos.length > 0 && esActual && (
-          <button type="button" className="block w-full rounded-[26px] border border-border bg-surface p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition active:scale-[0.99]" onClick={() => ir('logros')}>
+          <button type="button" className="block w-full rounded-[26px] border border-border bg-surface p-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] tarjeta-tactil" onClick={() => ir('logros')}>
             <span className="flex items-center gap-3">
               <Emoji>{reto ? reto.icono : '🏆'}</Emoji>
               <span className="min-w-0 flex-1">
@@ -202,7 +202,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
               <button
                 key={p.id}
                 type="button"
-                className="flex w-full flex-col gap-2 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+                className="flex w-full flex-col gap-2 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2"
                 onClick={() => ir('movimientos', { categoriaId: p.id, periodo: true })}
               >
                 <span className="flex w-full items-center gap-3">

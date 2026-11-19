@@ -86,7 +86,7 @@ export function TarjetaSalud({ onClick, compacta }: { onClick?: () => void; comp
   );
   if (!onClick) return <Card>{contenido}</Card>;
   return (
-    <button type="button" className="block w-full rounded-[26px] border border-border bg-surface p-5 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition active:scale-[0.99]" onClick={onClick}>
+    <button type="button" className="block w-full rounded-[26px] border border-border bg-surface p-5 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] tarjeta-tactil" onClick={onClick}>
       {contenido}
     </button>
   );
@@ -186,7 +186,7 @@ export function TarjetaTeDeben({ onClick }: { onClick: () => void }) {
   const n = porPersona(cobros, movimientos).length;
   if (salud.cifras.teDeben <= 0) return null;
   return (
-    <button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-[26px] border border-border bg-surface px-5 py-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] transition active:scale-[0.99]" onClick={onClick}>
+    <button type="button" className="flex min-h-14 w-full items-center gap-3 rounded-[26px] border border-border bg-surface px-5 py-4 text-left shadow-[0_1px_2px_rgba(16,24,40,0.04)] tarjeta-tactil" onClick={onClick}>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-[18px]">🤝</span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] text-muted">Te deben</span>

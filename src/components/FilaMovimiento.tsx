@@ -15,7 +15,7 @@ export function FilaMovimiento({ m }: { m: Movimiento }) {
   return (
     <button
       type="button"
-      className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2"
+      className="flex min-h-14 w-full items-center gap-3 rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2"
       onClick={() => abrirEditor(m)}
     >
       <Emoji>{esTransf ? '🔁' : cat?.icono ?? '❔'}</Emoji>

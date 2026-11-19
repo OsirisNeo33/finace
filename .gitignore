@@ -2,3 +2,7 @@ node_modules
 dist
 dev-dist
 *.local
+
+# Restos de tsc -b
+*.tsbuildinfo
+vite.config.js

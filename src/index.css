@@ -144,6 +144,40 @@ textarea {
   }
 }
 
+/* Entrada escalonada de las tarjetas de cada pantalla */
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+.pagina > * {
+  animation: entrar 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.pagina > :nth-child(2) { animation-delay: 40ms; }
+.pagina > :nth-child(3) { animation-delay: 80ms; }
+.pagina > :nth-child(4) { animation-delay: 120ms; }
+.pagina > :nth-child(5) { animation-delay: 160ms; }
+.pagina > :nth-child(6) { animation-delay: 200ms; }
+.pagina > :nth-child(7) { animation-delay: 240ms; }
+.pagina > :nth-child(n + 8) { animation-delay: 280ms; }
+/* Pulsación de tarjetas táctiles */
+.tarjeta-tactil {
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tarjeta-tactil:active {
+  transform: scale(0.975);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pagina > * {
+    animation: none;
+  }
+  .tarjeta-tactil:active {
+    transform: none;
+  }
+}
+
 /* Gamificación */
 @keyframes confeti {
   from {

@@ -91,7 +91,7 @@ function FilaDeuda({ d, onClick }: { d: Deuda; onClick: () => void }) {
   const p = saldada ? null : proyectar(d.pendiente, d.cuota, d.tae);
   const progreso = d.importeInicial > 0 ? Math.min(1, Math.max(0, (d.importeInicial - d.pendiente) / d.importeInicial)) : 0;
   return (
-    <button type="button" className={cx('block w-full rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left transition active:scale-[0.99] active:bg-surface-2', saldada && 'opacity-70')} onClick={onClick} aria-label={`${d.nombre}: ${dinero(d.pendiente)} pendientes`}>
+    <button type="button" className={cx('block w-full rounded-[18px] border border-border bg-surface px-3.5 py-3 text-left tarjeta-tactil active:bg-surface-2', saldada && 'opacity-70')} onClick={onClick} aria-label={`${d.nombre}: ${dinero(d.pendiente)} pendientes`}>
       <span className="flex items-center gap-3">
         <Emoji>{t.icono}</Emoji>
         <span className="min-w-0 flex-1">
