@@ -92,3 +92,4 @@ export const IconoCartera = base(
     <path d="M16 13.5h.1" />
   </>,
 );
+export const IconoTransferir = base(<path d="M4 8h14M14 4l4 4-4 4M20 16H6M10 12l-4 4 4 4" />);

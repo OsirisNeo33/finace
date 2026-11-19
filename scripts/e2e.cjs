@@ -84,7 +84,9 @@ const capturas = process.argv[2];
   assert.match((await p.getByTestId('gastos').innerText()).replace(/\s/g, ' '), /64,50/);
 
   // Gamificación: el primer gasto desbloquea «Primer paso» y hay nivel y XP
-  await p.getByRole('button', { name: /Ver logros/ }).first().click();
+  // El banner de nivel está en Ajustes
+  await p.getByRole('button', { name: 'Ajustes' }).click();
+  await p.getByRole('button', { name: /Nivel \d+.*Ver logros/ }).click();
   await p.getByText('Retos de esta semana').waitFor();
   assert.strictEqual(await p.locator('[data-logro="primer-paso"]').getAttribute('data-desbloqueado'), 'true');
   assert.ok(premios >= 1, 'se celebró al menos una insignia');
