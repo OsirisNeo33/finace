@@ -114,11 +114,11 @@ export function Bienvenida() {
 
           <Panel title="Saldo de hoy" detail={<span className="num">{validas.length}</span>}>
             {cuentas.map((c, i) => (
-              <Tile key={c.nombre + i} className="py-2">
+              <Tile key={c.nombre + i} className="flex-wrap gap-y-2 py-2">
                 <Emoji>{c.icono}</Emoji>
                 <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.nombre}</span>
                 <input
-                  className="num w-28 rounded-xl border border-border bg-surface-2 px-3 py-2 text-right text-[16px] focus:border-brand focus:outline-none"
+                  className="num order-last min-h-11 w-full rounded-xl border border-border bg-surface-2 px-3 text-right text-[16px] focus:border-brand focus:outline-none min-[375px]:order-none min-[375px]:w-32"
                   inputMode="decimal"
                   placeholder="Saldo"
                   aria-label={`Saldo de ${c.nombre}`}

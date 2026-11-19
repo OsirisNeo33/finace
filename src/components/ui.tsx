@@ -76,7 +76,7 @@ export function Panel({ title, detail, footer, children, className, ...props }: 
 /** Enlace de texto azul para la cabecera de un panel ("Ver todos"). */
 export function PanelLink({ children, onClick }: { children: ReactNode; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="-my-2 -mr-1 min-h-11 px-1 text-[13px] font-medium text-brand">
+    <button type="button" onClick={onClick} className="-my-2 min-h-11 pl-2 text-[13px] font-medium text-brand">
       {children}
     </button>
   );
@@ -144,7 +144,7 @@ export function TileButton({
           (detail || chevron) && (
             <>
               {detail && <span className="max-w-[50%] shrink-0 text-right text-[13px] text-muted">{detail}</span>}
-              {chevron && <IconoSiguiente width={16} height={16} className="shrink-0 text-muted" />}
+              {chevron && <IconoSiguiente width={16} height={16} className={cx('shrink-0 text-muted', !!detail && 'max-[374px]:hidden')} />}
             </>
           )
         }
@@ -192,7 +192,7 @@ export function HeaderButton({ label, children, onClick }: { label: string; chil
 }
 
 /** Control segmentado (Gastos / Ingresos…). */
-export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: string }[]; onChange: (value: T) => void; label?: string }) {
+export function Segmented<T extends string>({ value, options, onChange, label }: { value: T; options: { value: T; label: ReactNode }[]; onChange: (value: T) => void; label?: string }) {
   return (
     <div role="tablist" aria-label={label} className="flex rounded-2xl border border-border bg-surface-2 p-1">
       {options.map((o) => (
@@ -202,7 +202,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
           type="button"
           aria-selected={o.value === value}
           onClick={() => onChange(o.value)}
-          className={cx('min-h-10 flex-1 rounded-xl text-[14px] font-medium transition', o.value === value ? 'bg-surface text-text shadow-sm' : 'text-muted')}
+          className={cx('min-h-10 min-w-0 flex-1 rounded-xl px-1 text-[14px] leading-tight font-medium transition', o.value === value ? 'bg-surface text-text shadow-sm' : 'text-muted')}
         >
           {o.label}
         </button>
@@ -213,7 +213,7 @@ export function Segmented<T extends string>({ value, options, onChange, label }:
 
 export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
-    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={cx('relative h-8 w-[52px] shrink-0 rounded-full transition', checked ? 'bg-brand' : 'bg-border')}>
+    <button type="button" role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={cx("relative h-8 w-[52px] shrink-0 rounded-full transition before:absolute before:-inset-1.5 before:content-['']", checked ? 'bg-brand' : 'bg-border')}>
       <span className={cx('absolute top-1 size-6 rounded-full bg-white shadow transition-all', checked ? 'left-[24px]' : 'left-1')} />
     </button>
   );
@@ -244,9 +244,26 @@ const claseTonoChip = (tone: TonoChip) =>
     tone === 'brand' && 'border-transparent bg-brand-soft text-brand',
   );
 
-/** Etiqueta de estado. */
+/** Etiqueta de estado. En pantallas estrechas el texto puede pasar a dos líneas en vez de salirse. */
 export function Chip({ tone = 'neutral', className, ...props }: ComponentProps<'span'> & { tone?: TonoChip }) {
-  return <span {...props} className={cx('inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium whitespace-nowrap', claseTonoChip(tone), className)} />;
+  return <span {...props} className={cx('inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] leading-tight font-medium', claseTonoChip(tone), className)} />;
+}
+
+/**
+ * Cifra grande que se reduce sola si no cabe en su tarjeta (iPhone SE, importes de 5–6 cifras).
+ * Usa unidades de contenedor: el tamaño máximo es `max` px y nunca supera el ancho disponible.
+ */
+export function Cifra({ children, max = 22, className, ...props }: Omit<ComponentProps<'p'>, 'children'> & { children: string | number; max?: number }) {
+  const texto = String(children);
+  // Ancho de un carácter monoespaciado ≈ 0,6 em (+ margen); el número de caracteres fija el tamaño que cabe.
+  const ajuste = 100 / (Math.max(texto.length, 3) * 0.63);
+  return (
+    <div className="@container w-full min-w-0">
+      <p {...props} className={cx('num leading-tight font-semibold whitespace-nowrap', className)} style={{ fontSize: `min(${max}px, ${ajuste.toFixed(2)}cqi)` }}>
+        {texto}
+      </p>
+    </div>
+  );
 }
 
 /** Chip pulsable para filtros y opciones rápidas (activo = azul suave). */
@@ -274,7 +291,7 @@ export function ChipSelect({ active, className, children, ...props }: ComponentP
 /* Formularios                                                         */
 /* ------------------------------------------------------------------ */
 
-const inputClass = 'mt-1 w-full rounded-xl bg-transparent text-[16px] text-text placeholder:text-muted/60 focus:outline-none disabled:opacity-60';
+const inputClass = 'min-h-10 w-full rounded-xl bg-transparent text-[16px] text-text placeholder:text-muted/60 focus:outline-none disabled:opacity-60';
 
 function Ayuda({ hint, hintTone }: { hint?: ReactNode; hintTone?: 'danger' | 'warning' | 'brand' }) {
   if (!hint) return null;
@@ -285,7 +302,7 @@ function Ayuda({ hint, hintTone }: { hint?: ReactNode; hintTone?: 'danger' | 'wa
 export function Field({ label, hint, hintTone, className, ...props }: { label: string; hint?: ReactNode; hintTone?: 'danger' | 'warning' | 'brand' } & ComponentProps<'input'>) {
   const id = useId();
   return (
-    <div className={cx('rounded-[18px] border bg-surface px-3.5 py-2.5 focus-within:border-brand', hintTone === 'danger' ? 'border-danger' : 'border-border')}>
+    <div className={cx('rounded-[18px] border bg-surface px-3.5 pt-2 pb-1.5 focus-within:border-brand', hintTone === 'danger' ? 'border-danger' : 'border-border')}>
       <label htmlFor={id} className="block text-[12px] font-medium text-muted">
         {label}
       </label>
@@ -303,11 +320,11 @@ export function AmountField({ label, value, onChange, ...props }: { label: strin
 export function SelectField({ label, hint, children, ...props }: { label: string; hint?: ReactNode } & ComponentProps<'select'>) {
   const id = useId();
   return (
-    <div className="rounded-[18px] border border-border bg-surface px-3.5 py-2.5 focus-within:border-brand">
+    <div className="rounded-[18px] border border-border bg-surface px-3.5 pt-2 pb-1.5 focus-within:border-brand">
       <label htmlFor={id} className="block text-[12px] font-medium text-muted">
         {label}
       </label>
-      <select id={id} {...props} className="mt-1 w-full appearance-none bg-transparent text-[16px] text-text focus:outline-none">
+      <select id={id} {...props} className="min-h-10 w-full appearance-none bg-transparent text-[16px] text-text focus:outline-none">
         {children}
       </select>
       <Ayuda hint={hint} />
@@ -326,7 +343,7 @@ export function SearchField(props: ComponentProps<'input'>) {
         <circle cx="11" cy="11" r="6.5" />
         <path d="M20 20l-4.2-4.2" strokeLinecap="round" />
       </svg>
-      <input type="search" {...props} className="w-full bg-transparent text-[16px] placeholder:text-muted/70 focus:outline-none" />
+      <input type="search" {...props} className="min-h-11 w-full bg-transparent text-[16px] placeholder:text-muted/70 focus:outline-none" />
     </label>
   );
 }

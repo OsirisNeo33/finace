@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { addDays } from 'date-fns';
 import { useDatos } from '../contexto';
 import { Hoja } from './Hoja';
-import { IconoBorrar, IconoCalendario, IconoPapelera } from './Iconos';
+import { IconoBorrar, IconoCalendario, IconoCerrar, IconoPapelera } from './Iconos';
 import { Button, Card, ChipButton, Field, FieldRow, Label, Panel, Segmented, SelectField, cx } from './ui';
 import { aCentimos, pulsarTecla } from '../domain/dinero';
 import { aISO, hoyISO, fechaCorta } from '../domain/fechas';
@@ -137,6 +137,8 @@ export function Editor() {
   });
 
   const colorImporte = tipo === 'ingreso' ? 'text-success' : 'text-text';
+  const textoImporte = texto ? texto.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '0';
+  const simbolo = dinero(0).replace(/[\d.,\s]/g, '');
   const tocarCategoria = (id: string) => {
     setCategoriaId(id);
     if (!existente) guardar(id);
@@ -156,20 +158,33 @@ export function Editor() {
                 setCategoriaId(undefined);
                 setError('');
               }}
-              options={TIPOS.map((t) => ({ value: t.id, label: t.nombre }))}
+              options={TIPOS.map((t) => ({
+                value: t.id,
+                label:
+                  t.id === 'transferencia' ? (
+                    <>
+                      <span className="min-[375px]:hidden">Traspaso</span>
+                      <span className="hidden min-[375px]:inline">Transferencia</span>
+                    </>
+                  ) : (
+                    t.nombre
+                  ),
+              }))}
             />
           </div>
-          <button type="button" className="min-h-11 px-2 text-[15px] font-medium text-brand" onClick={cerrarEditor}>
-            Cerrar
+          <button type="button" className="flex size-11 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-muted active:scale-95" onClick={cerrarEditor} aria-label="Cerrar">
+            <IconoCerrar width={20} height={20} />
           </button>
         </div>
 
         {/* Importe */}
         <Card className="py-3 text-center">
           <Label>{tipo === 'gasto' ? 'Gasto' : tipo === 'ingreso' ? 'Ingreso' : 'Transferencia'}</Label>
-          <div className={cx('num text-[40px] leading-tight font-semibold', texto ? colorImporte : 'text-muted')} data-testid="importe">
-            {texto ? `${texto.replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ` : '0 '}
-            <span className="text-[26px]">{dinero(0).replace(/[\d.,\s]/g, '')}</span>
+          <div className="@container">
+            <div className={cx('num leading-tight font-semibold whitespace-nowrap', texto ? colorImporte : 'text-muted')} style={{ fontSize: `min(40px, ${(100 / (Math.max(textoImporte.length + 2, 4) * 0.63)).toFixed(2)}cqi)` }} data-testid="importe">
+              {textoImporte}{' '}
+              <span style={{ fontSize: '0.65em' }}>{simbolo}</span>
+            </div>
           </div>
           <div className="h-5 text-[13px] font-medium text-danger" role="alert">
             {error}
@@ -255,7 +270,7 @@ export function Editor() {
         {/* Categorías: un toque guarda */}
         {tipo !== 'transferencia' && (
           <Panel title={existente ? 'Categoría' : 'Toca una categoría para guardar'}>
-            <div className="grid grid-cols-5 gap-1">
+            <div className="grid grid-cols-4 gap-1 min-[375px]:grid-cols-5">
               {cats.map((c) => (
                 <button
                   key={c.id}

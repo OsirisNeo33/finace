@@ -8,7 +8,7 @@ import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { IconoBajar, IconoFuego, IconoMas, IconoSubir } from '../components/Iconos';
-import { BrandHero, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
+import { Cifra, BrandHero, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
 import { agruparPorDia, enPeriodo, progresoPresupuestos, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
 import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -87,23 +87,19 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
         {/* Resumen: la tarjeta negra de la pantalla */}
         <Card dark>
           <p className="text-[13px] text-white/60">Balance del mes</p>
-          <p className="num mt-1 text-[34px] leading-tight font-semibold" data-testid="balance">
-            {dinero(r.balance)}
-          </p>
+          <Cifra max={34} className="mt-1" data-testid="balance">{dinero(r.balance)}</Cifra>
           <div className="mt-4 grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
             <div>
               <p className="flex items-center gap-1 text-[13px] text-white/60">
                 <IconoSubir width={14} height={14} /> Ingresos
               </p>
-              <p className="num mt-0.5 text-[20px] font-semibold">{dinero(r.ingresos, { signo: true })}</p>
+              <Cifra max={20} className="mt-0.5">{dinero(r.ingresos, { signo: true })}</Cifra>
             </div>
             <div>
               <p className="flex items-center gap-1 text-[13px] text-white/60">
                 <IconoBajar width={14} height={14} /> Gastos
               </p>
-              <p className="num mt-0.5 text-[20px] font-semibold" data-testid="gastos">
-                {dinero(-r.gastos)}
-              </p>
+              <Cifra max={20} className="mt-0.5" data-testid="gastos">{dinero(-r.gastos)}</Cifra>
             </div>
           </div>
           {esActual && dias > 0 && (r.ingresos > 0 || global) && (

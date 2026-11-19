@@ -3,7 +3,7 @@ import { useDatos } from '../contexto';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { IconoCerrar, IconoLista } from '../components/Iconos';
-import { Button, Card, Chip, ChipButton, ChipSelect, EmptyState, Label, Page, PageHeader, Panel, SearchField } from '../components/ui';
+import { Cifra, Button, Card, Chip, ChipButton, ChipSelect, EmptyState, Label, Page, PageHeader, Panel, SearchField } from '../components/ui';
 import { agruparPorDia, enPeriodo, resumen } from '../domain/calculos';
 import { fechaLarga } from '../domain/fechas';
 import type { TipoMovimiento } from '../domain/tipos';
@@ -108,11 +108,11 @@ export function Movimientos({ periodo, desplazamiento, setDesplazamiento, filtro
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-4">
             <Label>Ingresos</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{dinero(r.ingresos)}</p>
+            <Cifra max={22} className="mt-1">{dinero(r.ingresos)}</Cifra>
           </Card>
           <Card className="p-4">
             <Label>Gastos</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{dinero(r.gastos)}</p>
+            <Cifra max={22} className="mt-1">{dinero(r.gastos)}</Cifra>
             <Chip tone={r.balance < 0 ? 'danger' : 'success'} className="num mt-1.5">
               Balance {dinero(r.balance, { signo: true })}
             </Chip>

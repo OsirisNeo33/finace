@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
-import { Alerta, AmountField, Button, Card, Emoji, Field, FieldRow, Panel, Segmented, SelectField, Tile, TileButton, Toggle, cx } from '../../components/ui';
+import { Cifra, Alerta, AmountField, Button, Card, Emoji, Field, FieldRow, Panel, Segmented, SelectField, Tile, TileButton, Toggle, cx } from '../../components/ui';
 import { aCentimos } from '../../domain/dinero';
 import { fechaCorta, fechasPendientes, hoyISO, siguienteFecha } from '../../domain/fechas';
 import type { Frecuencia, Recurrente } from '../../domain/tipos';
@@ -31,7 +31,7 @@ export function Recurrentes() {
       {mensual > 0 && (
         <Card dark>
           <p className="text-[13px] text-white/60">Gastos fijos al mes (aprox.)</p>
-          <p className="num mt-1 text-[34px] leading-tight font-semibold">{dinero(mensual)}</p>
+          <Cifra max={34} className="mt-1">{dinero(mensual)}</Cifra>
         </Card>
       )}
       <Panel title="Tus recurrentes" detail={recurrentes.length ? <span className="num">{recurrentes.length}</span> : undefined} footer="Se apuntan solos en su fecha (al abrir la app) o, si los dejas como recordatorio, los marcas tú como pagados en la pestaña Pagos.">

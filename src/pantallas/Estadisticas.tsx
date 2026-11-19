@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { GraficoMeses, type PuntoMes } from '../components/GraficoMeses';
-import { Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, ProgressBar, Segmented, Tile, cx, tonoPresupuesto } from '../components/ui';
+import { Cifra, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, ProgressBar, Segmented, Tile, cx, tonoPresupuesto } from '../components/ui';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { enPeriodo, progresoPresupuestos, resumen, totalesPorCategoria } from '../domain/calculos';
 import { aISO, fechaLarga, hoyISO, mesCorto, periodoDe } from '../domain/fechas';
@@ -73,12 +73,12 @@ export function Estadisticas({ periodo, desplazamiento, setDesplazamiento, ir }:
         <div className="grid grid-cols-2 gap-3">
           <Card dark className="p-4">
             <p className="text-[13px] text-white/60">Gasto medio diario</p>
-            <p className="num mt-1 text-[22px] font-semibold">{dinero(mediaDiaria)}</p>
+            <Cifra max={22} className="mt-1">{dinero(mediaDiaria)}</Cifra>
             <p className="mt-1 text-[12px] text-white/60">{diasTranscurridos ? `En ${diasTranscurridos} ${diasTranscurridos === 1 ? 'día' : 'días'}` : 'Mes sin empezar'}</p>
           </Card>
           <Card className="p-4">
             <Label>Tasa de ahorro</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{r.ingresos ? `${Math.round((r.balance / r.ingresos) * 100)} %` : '—'}</p>
+            <Cifra max={22} className="mt-1">{r.ingresos ? `${Math.round((r.balance / r.ingresos) * 100)} %` : '—'}</Cifra>
             {r.ingresos > 0 && (
               <Chip tone={r.balance >= 0 ? 'success' : 'danger'} className="mt-1.5">
                 {r.balance >= 0 ? 'Ahorras' : 'Gastas de más'}
@@ -87,12 +87,12 @@ export function Estadisticas({ periodo, desplazamiento, setDesplazamiento, ir }:
           </Card>
           <Card className="p-4">
             <Label>Día de más gasto</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{diaMax ? dinero(diaMax[1]) : '—'}</p>
+            <Cifra max={22} className="mt-1">{diaMax ? dinero(diaMax[1]) : '—'}</Cifra>
             {diaMax && <p className="mt-1 truncate text-[12px] text-muted first-letter:uppercase">{fechaLarga(diaMax[0])}</p>}
           </Card>
           <Card className="p-4">
             <Label>Vs. mes anterior</Label>
-            <p className="num mt-1 text-[22px] font-semibold">{variacion === null ? '—' : `${variacion > 0 ? '+' : ''}${Math.round(variacion * 100)} %`}</p>
+            <Cifra max={22} className="mt-1">{variacion === null ? '—' : `${variacion > 0 ? '+' : ''}${Math.round(variacion * 100)} %`}</Cifra>
             {variacion !== null && (
               <Chip tone={variacion > 0 ? 'danger' : 'success'} className="mt-1.5">
                 {variacion > 0 ? '▲ Has gastado más' : '▼ Has gastado menos'}
@@ -187,7 +187,7 @@ export function Estadisticas({ periodo, desplazamiento, setDesplazamiento, ir }:
                 <button
                   key={d}
                   type="button"
-                  className={cx('flex aspect-square min-h-11 flex-col items-center justify-center rounded-xl text-[13px] transition active:scale-95', !g && 'bg-surface-2', d === diaSel ? 'ring-2 ring-brand' : d === hoy && 'ring-1 ring-muted', d > hoy && 'opacity-40')}
+                  className={cx('flex min-h-11 min-w-0 flex-col items-center justify-center rounded-xl sm:aspect-square text-[13px] transition active:scale-95', !g && 'bg-surface-2', d === diaSel ? 'ring-2 ring-brand' : d === hoy && 'ring-1 ring-muted', d > hoy && 'opacity-40')}
                   style={{
                     background: g ? `color-mix(in srgb, var(--chart-expense) ${Math.round(intensidad * 100)}%, var(--surface))` : undefined,
                     color: intensidad > 0.55 ? 'white' : undefined,

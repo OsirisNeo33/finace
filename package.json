@@ -10,7 +10,8 @@
     "e2e": "node scripts/e2e.cjs",
     "iconos": "node scripts/iconos.cjs",
     "ios": "CAPACITOR=1 vite build && cap sync ios && cap open ios",
-    "ios:sync": "CAPACITOR=1 vite build && cap sync ios"
+    "ios:sync": "CAPACITOR=1 vite build && cap sync ios",
+    "responsive": "node scripts/responsive.cjs"
   },
   "repository": {
     "type": "git",
