@@ -6,14 +6,33 @@ import { fechaCorta, aISO } from '../../domain/fechas';
 import { TIPOS_INVERSION } from '../../domain/salud';
 import type { Inversion, TipoInversion } from '../../domain/tipos';
 import { Hoja } from '../../components/Hoja';
-import { AmountField, Button, Card, Chip, ChipButton, Cifra, Emoji, EmptyState, Field, FieldRow, Panel, ProgressBar, SelectField, Tile, TileButton } from '../../components/ui';
+import { AmountField, Button, Card, Chip, ChipButton, Cifra, Emoji, EmptyState, Field, FieldRow, Panel, ProgressBar, Segmented, SelectField, Tile, TileButton } from '../../components/ui';
+import { Trading } from './Trading';
 import { usarFinanzas } from '../usarFinanzas';
 
-const PLATAFORMAS = ['MyInvestor', 'Trade Republic', 'Indexa Capital', 'Finizens', 'Openbank', 'BBVA', 'ING', 'Revolut', 'Interactive Brokers', 'DEGIRO', 'eToro', 'Binance', 'Coinbase', 'Bit2Me'];
+const PLATAFORMAS = ['MyInvestor', 'Trade Republic', 'Indexa Capital', 'Finizens', 'Openbank', 'BBVA', 'ING', 'Revolut', 'Interactive Brokers', 'DEGIRO', 'XTB', 'IG', 'eToro', 'Plus500', 'Binance', 'Coinbase', 'Bit2Me'];
 const aTexto = (c: number) => (c ? (c / 100).toFixed(2).replace('.', ',').replace(/,00$/, '') : '');
 const porcentaje = (x: number) => `${x > 0 ? '+' : ''}${(x * 100).toLocaleString('es-ES', { maximumFractionDigits: 1 })} %`;
 
 export function Inversiones() {
+  const [sub, setSub] = useState<'cartera' | 'trading'>('cartera');
+  return (
+    <>
+      <Segmented
+        label="Inversiones"
+        value={sub}
+        onChange={setSub}
+        options={[
+          { value: 'cartera', label: 'Cartera' },
+          { value: 'trading', label: 'Trading' },
+        ]}
+      />
+      {sub === 'cartera' ? <Cartera /> : <Trading />}
+    </>
+  );
+}
+
+function Cartera() {
   const { dinero } = useDatos();
   const { inversiones } = usarFinanzas();
   const [form, setForm] = useState<Inversion | 'nueva' | null>(null);
@@ -140,7 +159,7 @@ function FormInversion({ inversion, onCerrar }: { inversion?: Inversion; onCerra
               </option>
             ))}
           </SelectField>
-          <Field label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder={tipo === 'cripto' ? 'Ej. Bitcoin' : tipo === 'acciones' ? 'Ej. Acciones de Inditex' : 'Ej. Fondo indexado MSCI World'} maxLength={40} />
+          <Field label="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder={tipo === 'cripto' ? 'Ej. Bitcoin' : tipo === 'acciones' ? 'Ej. Acciones de Inditex' : tipo === 'trading' ? 'Ej. Cuenta de trading XTB' : 'Ej. Fondo indexado MSCI World'} maxLength={40} />
           <Field label="Dónde la tienes (opcional)" value={plataforma} onChange={(e) => setPlataforma(e.target.value)} placeholder="Bróker, banco o app" maxLength={30} />
           <div className="sin-scrollbar -mx-2 flex gap-1.5 overflow-x-auto px-2 pb-1">
             {PLATAFORMAS.map((p) => (

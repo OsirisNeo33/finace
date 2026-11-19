@@ -98,6 +98,7 @@ export interface Copia {
     deudas?: unknown[];
     inversiones?: unknown[];
     cobros?: unknown[];
+    operaciones?: unknown[];
   };
 }
 
@@ -116,6 +117,7 @@ export async function exportarJSON(): Promise<Copia> {
       deudas: await db.deudas.toArray(),
       inversiones: await db.inversiones.toArray(),
       cobros: await db.cobros.toArray(),
+      operaciones: await db.operaciones.toArray(),
     },
   };
 }
@@ -123,7 +125,7 @@ export async function exportarJSON(): Promise<Copia> {
 export async function importarJSON(copia: Copia) {
   if (copia?.app !== 'finace' || !copia.datos) throw new Error('El archivo no es una copia de seguridad de Finace.');
   const d = copia.datos;
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros], async () => {
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros, db.operaciones], async () => {
     await borrarTablas();
     await db.cuentas.bulkAdd((d.cuentas ?? []) as never[]);
     await db.categorias.bulkAdd((d.categorias ?? []) as never[]);
@@ -134,15 +136,16 @@ export async function importarJSON(copia: Copia) {
     await db.deudas.bulkAdd((d.deudas ?? []) as never[]);
     await db.inversiones.bulkAdd((d.inversiones ?? []) as never[]);
     await db.cobros.bulkAdd((d.cobros ?? []) as never[]);
+    await db.operaciones.bulkAdd((d.operaciones ?? []) as never[]);
   });
 }
 
 async function borrarTablas() {
-  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear(), db.deudas.clear(), db.inversiones.clear(), db.cobros.clear()]);
+  await Promise.all([db.cuentas.clear(), db.categorias.clear(), db.movimientos.clear(), db.recurrentes.clear(), db.presupuestos.clear(), db.ajustes.clear(), db.deudas.clear(), db.inversiones.clear(), db.cobros.clear(), db.operaciones.clear()]);
 }
 
 export async function borrarTodo() {
-  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros], borrarTablas);
+  await db.transaction('rw', [db.cuentas, db.categorias, db.movimientos, db.recurrentes, db.presupuestos, db.ajustes, db.deudas, db.inversiones, db.cobros, db.operaciones], borrarTablas);
 }
 
 const csvCelda = (v: unknown) => {

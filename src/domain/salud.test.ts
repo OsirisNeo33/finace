@@ -103,6 +103,13 @@ describe('salud financiera', () => {
     expect(s.consejos.map((c) => c.id)).toContain('cobrar');
   });
 
+  it('avisa si el trading pierde dinero o pesa demasiado', () => {
+    const op = (r: number) => ({ id: Math.random().toString(36), activo: 'X', mercado: 'forex' as const, direccion: 'largo' as const, apertura: '2026-11-01', cierre: '2026-11-10', comisiones: 0, resultadoManual: r, creadoEn: '', actualizadoEn: '' });
+    const inv = { id: 'i', nombre: 'IG', tipo: 'trading' as const, aportado: 500_000, valor: 400_000, creadoEn: '', actualizadoEn: '' };
+    const s = evaluarSalud(datos({ cuentas: [cuenta({ saldoInicial: 100_000 })], recurrentes: [rec({ tipo: 'ingreso', importe: 200_000 })], inversiones: [inv], operaciones: [op(-5_000), op(2_000), op(-8_000)] }));
+    expect(s.consejos.map((c) => c.id)).toEqual(expect.arrayContaining(['trading-pierde', 'trading-riesgo']));
+  });
+
   it('pide los ingresos si no hay datos suficientes', () => {
     const s = evaluarSalud(datos({}));
     expect(s.puntos).toBeNull();

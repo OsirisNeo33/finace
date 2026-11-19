@@ -3,13 +3,15 @@ import { periodoDe } from './fechas';
 import { resumenFijos } from './fijos';
 import { TAE_CARA, deudasActivas, ordenAvalancha } from './deudas';
 import { porPersona } from './cobros';
-import type { Cobro, Cuenta, Deuda, Inversion, Movimiento, Recurrente, TipoInversion } from './tipos';
+import { desdePeriodo, estadisticas } from './trading';
+import type { Cobro, Operacion, Cuenta, Deuda, Inversion, Movimiento, Recurrente, TipoInversion } from './tipos';
 
 export const TIPOS_INVERSION: Record<TipoInversion, { nombre: string; icono: string }> = {
   fondo: { nombre: 'Fondo de inversión', icono: '📊' },
   etf: { nombre: 'ETF', icono: '🧺' },
   acciones: { nombre: 'Acciones', icono: '📈' },
   cripto: { nombre: 'Criptomonedas', icono: '🪙' },
+  trading: { nombre: 'Cuenta de trading', icono: '🕯️' },
   pension: { nombre: 'Plan de pensiones', icono: '🧓' },
   deposito: { nombre: 'Depósito o cuenta remunerada', icono: '🏦' },
   inmueble: { nombre: 'Inmueble', icono: '🏘️' },
@@ -65,6 +67,7 @@ export interface DatosSalud {
   deudas: Deuda[];
   inversiones: Inversion[];
   cobros?: Cobro[];
+  operaciones?: Operacion[];
   recurrentes: Recurrente[];
   diaInicioMes: number;
   hoy: Date;
@@ -233,6 +236,23 @@ export function evaluarSalud(d: DatosSalud): Salud {
         consejos.push({ id: 'diversificar', titulo: 'Diversifica tus inversiones', texto: `El ${pct(cuota)} está en ${TIPOS_INVERSION[tipo].nombre.toLowerCase()}. Repartir entre distintos tipos y mercados reduce el riesgo.`, destino: 'inversiones' });
     }
   }
+  // Trading: avisar si pierde dinero o si se juega demasiado capital
+  const t = estadisticas(d.operaciones ?? [], desdePeriodo('3m', d.hoy));
+  if (t.cerradas >= 3 && t.neto < 0)
+    consejos.push({
+      id: 'trading-pierde',
+      titulo: 'Tu trading está perdiendo dinero',
+      texto: `En los últimos 3 meses llevas ${d.dinero(t.neto)} en ${t.cerradas} operaciones (aciertas el ${pct(t.aciertos ?? 0)}). Revisa tu estrategia, opera con menos capital o valora invertir a largo plazo.`,
+      destino: 'inversiones',
+    });
+  const capitalTrading = d.inversiones.filter((x) => x.tipo === 'trading').reduce((s, x) => s + x.valor, 0);
+  if (capitalTrading > 0 && capitalTrading > 0.25 * (inversiones + liquidez))
+    consejos.push({
+      id: 'trading-riesgo',
+      titulo: 'Mucho dinero en trading',
+      texto: `El ${pct(capitalTrading / (inversiones + liquidez))} de tu dinero está en cuentas de trading. Es de alto riesgo: dedica solo una parte pequeña que puedas permitirte perder.`,
+      destino: 'inversiones',
+    });
   const olvidado = personas.filter((p) => p.dias >= 30).sort((a, b) => b.pendiente - a.pendiente)[0];
   if (olvidado)
     consejos.push({
