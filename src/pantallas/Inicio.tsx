@@ -10,7 +10,7 @@ import { useDatos } from '../contexto';
 import { SelectorPeriodo } from '../components/SelectorPeriodo';
 import { FilaMovimiento } from '../components/FilaMovimiento';
 import { IconoBajar, IconoCalendario, IconoMas, IconoSubir, IconoTransferir } from '../components/Iconos';
-import { Cifra, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
+import { Cifra, LogoCuenta, Button, Card, CardTitle, Chip, Emoji, EmptyState, Label, Page, PageHeader, Panel, PanelLink, ProgressBar, Tile, TileButton, cx, tonoPresupuesto } from '../components/ui';
 import { agruparPorDia, enPeriodo, progresoPresupuestos, resumen, saldosCuentas, totalesPorCategoria } from '../domain/calculos';
 import { aISO, diasRestantes, fechaLarga, hoyISO } from '../domain/fechas';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -235,7 +235,7 @@ export function Inicio({ periodo, desplazamiento, setDesplazamiento, ir }: Props
             return (
               <TileButton
                 key={c.id}
-                icon={<Emoji>{c.icono}</Emoji>}
+                icon={<LogoCuenta nombre={c.nombre} icono={c.icono} />}
                 title={c.nombre}
                 subtitle={TIPOS_CUENTA.find((t) => t[0] === c.tipo)?.[1]}
                 detail={<span className={cx('num text-[15px] font-semibold', saldo < 0 ? 'text-danger' : 'text-text')}>{dinero(saldo)}</span>}

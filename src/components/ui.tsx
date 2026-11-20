@@ -1,6 +1,7 @@
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import { IconoAtras, IconoSiguiente } from './Iconos';
 import { useNumeroAnimado } from './animacion';
+import { logoDe } from '../domain/logos';
 
 export function cx(...clases: (string | false | null | undefined)[]) {
   return clases.filter(Boolean).join(' ');
@@ -401,6 +402,35 @@ function WaveMark() {
         <circle cx="12" cy="12" r="10" className="fill-brand/30" />
         <path d="M2.5 13.5c3-2.5 6-2.5 9.5 0s6.5 2.5 9.5 0V14a9.5 9.5 0 0 1-19 0z" className="fill-brand" />
       </svg>
+    </span>
+  );
+}
+
+/**
+ * Icono de una cuenta: el logotipo de su banco si lo reconocemos por el nombre
+ * (Revolut, BBVA, PayPal…) y, si no, su emoji.
+ */
+export function LogoCuenta({ nombre, icono, tamano = 'normal' }: { nombre: string; icono: string; tamano?: 'mini' | 'normal' }) {
+  const logo = logoDe(nombre);
+  if (!logo) return tamano === 'mini' ? <span aria-hidden="true">{icono}</span> : <Emoji>{icono}</Emoji>;
+  const mini = tamano === 'mini';
+  const letras = logo.letras ?? '';
+  return (
+    <span
+      aria-hidden="true"
+      data-logo={nombre}
+      className={cx('flex shrink-0 items-center justify-center font-bold tracking-tight shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]', mini ? 'size-5 rounded-md' : 'size-9 rounded-xl')}
+      style={{ backgroundColor: logo.fondo, color: logo.tinta }}
+    >
+      {logo.path ? (
+        <svg viewBox="0 0 24 24" width={mini ? 12 : 19} height={mini ? 12 : 19} fill="currentColor">
+          <path d={logo.path} />
+        </svg>
+      ) : (
+        <span className="leading-none" style={{ fontSize: (mini ? 11 : 17) * (letras.length >= 4 ? 0.62 : letras.length === 3 ? 0.72 : letras.length === 2 ? 0.86 : 1.05) }}>
+          {letras}
+        </span>
+      )}
     </span>
   );
 }

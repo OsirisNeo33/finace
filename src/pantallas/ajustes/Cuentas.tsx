@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react';
 import { useDatos } from '../../contexto';
 import { Hoja } from '../../components/Hoja';
 import { SelectorIcono } from '../../components/Selectores';
-import { Cifra, AmountField, Button, Card, ChipButton, Emoji, Field, Panel, SelectField, TileButton, cx } from '../../components/ui';
+import { Cifra, AmountField, Button, Card, ChipButton, Emoji, Field, LogoCuenta, Panel, SelectField, Tile, TileButton, cx } from '../../components/ui';
 import { saldosCuentas } from '../../domain/calculos';
 import { aCentimos } from '../../domain/dinero';
 import { ENTIDADES, saldoInicialPara } from '../../domain/bancos';
+import { logoDe } from '../../domain/logos';
 import type { Cuenta, TipoCuenta } from '../../domain/tipos';
 import { db, nuevoId } from '../../db/db';
 
@@ -43,7 +44,7 @@ export function Cuentas() {
             <TileButton
               key={c.id}
               className={c.archivada ? 'opacity-60' : undefined}
-              icon={<Emoji>{c.icono}</Emoji>}
+              icon={<LogoCuenta nombre={c.nombre} icono={c.icono} />}
               title={c.nombre}
               subtitle={c.archivada ? 'Archivada' : TIPOS_CUENTA.find((t) => t[0] === c.tipo)?.[1]}
               detail={<span className={cx('num text-[15px] font-semibold', saldo < 0 ? 'text-danger' : 'text-text')}>{dinero(saldo)}</span>}
@@ -108,7 +109,9 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
                     setIcono(e.icono);
                     setColor(e.color);
                   }}
+                  className="pl-1.5"
                 >
+                  <LogoCuenta nombre={e.nombre} icono={e.icono} tamano="mini" />
                   {e.nombre}
                 </ChipButton>
               ))}
@@ -146,8 +149,18 @@ export function FormCuenta({ cuenta, onCerrar }: { cuenta?: Cuenta; onCerrar: ()
               </option>
             ))}
           </SelectField>
-          <TileButton icon={<Emoji>{icono}</Emoji>} title="Icono" detail={verIcono ? 'Ocultar' : 'Cambiar'} onClick={() => setVerIcono((v) => !v)} />
-          {verIcono && <SelectorIcono valor={icono} onCambio={setIcono} />}
+          {logoDe(nombre) ? (
+            <Tile>
+              <LogoCuenta nombre={nombre} icono={icono} />
+              <span className="min-w-0 flex-1 text-[15px]">Logotipo</span>
+              <span className="text-[13px] text-muted">Automático</span>
+            </Tile>
+          ) : (
+            <>
+              <TileButton icon={<Emoji>{icono}</Emoji>} title="Icono" detail={verIcono ? 'Ocultar' : 'Cambiar'} onClick={() => setVerIcono((v) => !v)} />
+              {verIcono && <SelectorIcono valor={icono} onCambio={setIcono} />}
+            </>
+          )}
         </Panel>
         <Button className="w-full" onClick={guardar} disabled={!nombre.trim()}>
           Guardar
