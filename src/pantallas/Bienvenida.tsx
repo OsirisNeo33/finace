@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { configurarInicial } from '../db/acciones';
 import { aCentimos } from '../domain/dinero';
 import { ENTIDADES } from '../domain/bancos';
-import { BrandHero, Button, ChipButton, Emoji, Field, IconBadge, Panel, SelectField, Tile, claseBoton } from '../components/ui';
+import { BrandHero, Button, ChipButton, LogoCuenta, Field, IconBadge, Panel, SelectField, Tile, claseBoton } from '../components/ui';
 import { IconoCerrar } from '../components/Iconos';
 import { MONEDAS } from './Ajustes';
 import type { TipoCuenta } from '../domain/tipos';
@@ -90,8 +90,8 @@ export function Bienvenida() {
           <Panel title="Añade tus bancos">
             <div className="flex flex-wrap gap-1.5 px-1">
               {ENTIDADES.filter((e) => !tiene(e.nombre)).map((e) => (
-                <ChipButton key={e.nombre} onClick={() => anadir({ ...e, saldo: '' })}>
-                  + {e.nombre}
+                <ChipButton key={e.nombre} className="pl-1.5" onClick={() => anadir({ ...e, saldo: '' })}>
+                  <LogoCuenta nombre={e.nombre} icono={e.icono} tamano="mini" />+ {e.nombre}
                 </ChipButton>
               ))}
             </div>
@@ -115,7 +115,7 @@ export function Bienvenida() {
           <Panel title="Saldo de hoy" detail={<span className="num">{validas.length}</span>}>
             {cuentas.map((c, i) => (
               <Tile key={c.nombre + i} className="flex-wrap gap-y-2 py-2">
-                <Emoji>{c.icono}</Emoji>
+                <LogoCuenta nombre={c.nombre} icono={c.icono} />
                 <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{c.nombre}</span>
                 <input
                   className="num order-last min-h-11 w-full rounded-xl border border-border bg-surface-2 px-3 text-right text-[16px] focus:border-brand focus:outline-none min-[375px]:order-none min-[375px]:w-32"

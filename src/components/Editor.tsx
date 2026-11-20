@@ -3,7 +3,7 @@ import { addDays } from 'date-fns';
 import { useDatos } from '../contexto';
 import { Hoja } from './Hoja';
 import { IconoBorrar, IconoCalendario, IconoCerrar, IconoPapelera } from './Iconos';
-import { Button, Card, ChipButton, Field, FieldRow, Label, Panel, Segmented, SelectField, cx } from './ui';
+import { Button, Card, ChipButton, Field, FieldRow, Label, LogoCuenta, Panel, Segmented, SelectField, cx } from './ui';
 import { aCentimos, pulsarTecla } from '../domain/dinero';
 import { aISO, hoyISO, fechaCorta } from '../domain/fechas';
 import { sugerirCategoria } from '../domain/calculos';
@@ -205,7 +205,7 @@ export function Editor() {
           </label>
           {cuentas.length > 1 && tipo !== 'transferencia' && (
             <label className="relative inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface px-3.5 text-[14px] font-medium whitespace-nowrap">
-              {cuentaPorId.get(cuentaId)?.icono} {cuentaPorId.get(cuentaId)?.nombre} ▾
+              {cuentaPorId.get(cuentaId) && <LogoCuenta nombre={cuentaPorId.get(cuentaId)!.nombre} icono={cuentaPorId.get(cuentaId)!.icono} tamano="mini" />} {cuentaPorId.get(cuentaId)?.nombre} ▾
               <select className="absolute inset-0 opacity-0" value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} aria-label="Cuenta">
                 {cuentas.map((c) => (
                   <option key={c.id} value={c.id}>
